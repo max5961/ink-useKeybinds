@@ -69,22 +69,25 @@ export class KeyBinds<T extends KbConfig = KbConfig> {
     private checkMatch(binding: Binding, key: Key): boolean {
         // Prevent ctrl + f triggering 'f'
         if (key.ctrl) {
-            // Special key + char input
-            if (binding.key && binding.input) {
-                return key[binding.key] && this.register === binding.input;
-            }
-
-            // Special key only
-            if (binding.key && !binding.input) {
-                return key[binding.key];
-            }
-
-            return false;
+            return this.checkSpecialKeyMatch(binding, key);
         }
 
         // Char input only
         if (!binding.key && binding.input) {
             return this.register === binding.input;
+        }
+
+        return this.checkSpecialKeyMatch(binding, key);
+    }
+
+    private checkSpecialKeyMatch(binding: Binding, key: Key): boolean {
+        if (binding.key && binding.input) {
+            return key[binding.key] && this.register === binding.input;
+        }
+
+        // Special key only
+        if (binding.key && !binding.input) {
+            return key[binding.key];
         }
 
         return false;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
-import { useKeybinds, KbConfig } from "./useKeybinds.js";
+import useKeybinds, { KbConfig } from "./useKeybinds.js";
 
 const kbs = {
     // 'f' input triggers 'foo' command
@@ -18,6 +18,8 @@ const kbs = {
     // Uppercase and lowercase input can be mixed
     BAR: [{ input: "Ba" }, { input: "Br" }],
     QUZ: [{ input: "qQ" }, { input: "Qq" }],
+
+    downArrow: { key: "downArrow" },
 
     ctrl_foobar: [
         // Non alphanumeric keys can be mixed with lowercase chars
@@ -66,6 +68,10 @@ export default function App(): React.ReactNode {
 
             if (cmd === "QUZ") {
                 setMsg("QUZ triggered");
+            }
+
+            if (cmd === "downArrow") {
+                setMsg("downArrow triggered");
             }
         },
         kbs,

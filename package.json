@@ -1,10 +1,11 @@
 {
     "name": "@mmorrissey5961/ink-use-keybinds",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "description": "An extension of Ink's builtin useInput hook",
     "main": "dist/useKeybinds.js",
     "scripts": {
-        "compile": "tsc"
+        "compile": "tsc",
+        "start": "tsc && node ./dist/root.js"
     },
     "keywords": [
         "ink",
