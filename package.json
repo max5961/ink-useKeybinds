@@ -1,14 +1,20 @@
 {
-    "name": "setupink",
+    "name": "@mmorrissey5961/ink-useKeybinds",
     "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
+    "description": "An extension of Ink's builtin useInput hook",
+    "main": "dist/useKeybinds.js",
     "scripts": {
-        "start": "tsc && node ./dist/root.js"
+        "compile": "tsc"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "keywords": [
+        "ink",
+        "tui"
+    ],
+    "author": {
+        "name": "Maxwell Morrissey",
+        "email": "mmorrissey5961@gmail.com"
+    },
+    "license": "MIT",
     "dependencies": {
         "@types/react": "latest",
         "ink": "latest",
@@ -21,5 +27,8 @@
         "prettier": "latest",
         "typescript": "latest"
     },
-    "type": "module"
+    "type": "module",
+    "files": [
+        "dist/*"
+    ]
 }
