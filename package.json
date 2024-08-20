@@ -1,0 +1,25 @@
+{
+    "name": "setupink",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "tsc && node ./dist/root.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@types/react": "latest",
+        "ink": "latest",
+        "react": "latest"
+    },
+    "devDependencies": {
+        "@babel/preset-env": "latest",
+        "@babel/preset-typescript": "latest",
+        "@types/node": "latest",
+        "prettier": "latest",
+        "typescript": "latest"
+    },
+    "type": "module"
+}

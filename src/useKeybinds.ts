@@ -32,7 +32,7 @@ import { Key } from "ink";
 export function useKeybinds<T extends KbConfig = any>(
     handler: (cmd: Command<typeof kbConfig> | null) => void,
     kbConfig: T,
-    opts?: UseKeyBindsOpts,
+    opts?: UseKbOpts,
 ) {
     const [data, setData] = useState<InputData<T>>({
         register: "",
@@ -63,13 +63,17 @@ export function useKeybinds<T extends KbConfig = any>(
     return data;
 }
 
+export type KbHandler<T extends KbConfig = any> = (
+    cmd: Command<T> | null,
+) => void;
+
 export type KbConfig = {
     [key: string]: Binding[] | Binding;
 };
 
 export type Binding = { key?: keyof Key; input?: string };
 
-export type UseKeyBindsOpts = {
+export type UseKbOpts = {
     trackState?: boolean;
 };
 
