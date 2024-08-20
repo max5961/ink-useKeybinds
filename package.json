@@ -1,5 +1,5 @@
 {
-    "name": "@mmorrissey5961/ink-useKeybinds",
+    "name": "@mmorrissey5961/ink-use-keybinds",
     "version": "1.0.0",
     "description": "An extension of Ink's builtin useInput hook",
     "main": "dist/useKeybinds.js",
