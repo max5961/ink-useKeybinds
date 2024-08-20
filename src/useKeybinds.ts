@@ -29,7 +29,7 @@ import { Key } from "ink";
  *     { trackState: true },
  **/
 
-export function useKeybinds<T extends KbConfig = any>(
+export default function useKeybinds<T extends KbConfig = any>(
     handler: (cmd: Command<typeof kbConfig> | null) => void,
     kbConfig: T,
     opts?: UseKbOpts,
