@@ -2,6 +2,7 @@ import { useInput } from "ink";
 import { useRef, useState } from "react";
 import { KeyBinds } from "./Keybinds.js";
 import { Key } from "ink";
+import { EventEmitter } from "events";
 
 /**
  * An extension of ink's builtin useInput hook.  It allows for 1-2 character
@@ -18,6 +19,7 @@ import { Key } from "ink";
  * } satisfies KbConfig;
  *
  * const { command, register } = useKeybinds(
+ *     kbs,
  *     (cmd) => {
  *         if (cmd === "foo") { // do something }
  *         if (cmd === "bar") { // do something }
@@ -25,13 +27,12 @@ import { Key } from "ink";
  *         if (cmd === "BAR") { // do something }
  *         if (cmd === "ctrl_foobar") { // do something }
  *     },
- *     kbs,
  *     { trackState: true },
  **/
 
 export default function useKeybinds<T extends KbConfig = any>(
-    handler: (cmd: Command<typeof kbConfig> | null) => void,
     kbConfig: T,
+    handler: (cmd: Command<typeof kbConfig> | null) => void,
     opts?: UseKbOpts,
 ) {
     const [data, setData] = useState<InputData<T>>({
@@ -46,10 +47,11 @@ export default function useKeybinds<T extends KbConfig = any>(
         kbConfig ? new KeyBinds(kbConfig) : null,
     );
 
+    let command: Command<T> | null = null;
     useInput((input, key) => {
         kb.current?.handleStdIn(input, key);
 
-        const command = kb.current?.getCommand() || null;
+        command = kb.current?.getCommand() || null;
 
         opts.trackState &&
             setData({
@@ -60,7 +62,12 @@ export default function useKeybinds<T extends KbConfig = any>(
         handler(command);
     });
 
-    return data;
+    const emitter = new EventEmitter();
+    if (command) {
+        emitter.emit(command);
+    }
+
+    return { data, emitter };
 }
 
 export type KbHandler<T extends KbConfig = any> = (

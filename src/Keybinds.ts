@@ -1,5 +1,6 @@
 import { Key } from "ink";
 import { KbConfig, Command, Binding } from "./useKeybinds.js";
+import EventEmitter from "events";
 
 export class KeyBinds<T extends KbConfig = KbConfig> {
     private config: T;

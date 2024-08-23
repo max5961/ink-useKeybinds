@@ -36,7 +36,8 @@ const kbs = {
 export default function App(): React.ReactNode {
     const [msg, setMsg] = useState<string>("No commands yet!");
 
-    const { command, register } = useKeybinds(
+    const { data, emitter } = useKeybinds(
+        kbs,
         (cmd) => {
             if (cmd === "just_return") {
                 setMsg("just_return triggered");
@@ -74,7 +75,6 @@ export default function App(): React.ReactNode {
                 setMsg("downArrow triggered");
             }
         },
-        kbs,
         { trackState: true },
     );
 
@@ -85,8 +85,8 @@ export default function App(): React.ReactNode {
                 <Text color="green">{` ${msg}!`}</Text>
             </Text>
             <Box display="flex" flexDirection="column">
-                <Text>{`Command: ${command ? command : ""}`}</Text>
-                <Text>{`Register: ${register}`}</Text>
+                <Text>{`Command: ${data.command ? data.command : ""}`}</Text>
+                <Text>{`Register: ${data.register}`}</Text>
             </Box>
         </>
     );
