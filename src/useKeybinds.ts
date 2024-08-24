@@ -1,64 +1,47 @@
-import { useInput } from "ink";
-import { useRef, useState } from "react";
-import { KeyBinds } from "./Keybinds.js";
-import { Key } from "ink";
-
-/**
- * An extension of ink's builtin useInput hook.  It allows for 1-2 character
- * combinations that can be joined with non-alphanumeric keys.  It uses a config
- * object where the properties are the command names and the values are the input
- * conditions that dispatch the command.
- *
- * const kbs = {
- *     foo: { input: "f" },
- *     bar: [{ input: "bb" }, { input: "aa" }],
- *     FOO: { input: "F" },
- *     BAR: [{ input: "BA" }, { input: "Ba" }],
- *     ctrl_foobar: { input: "fb", key: "ctrl" },
- * } satisfies KbConfig;
- *
- * const { command, register } = useKeybinds(
- *     (cmd) => {
- *         if (cmd === "foo") { // do something }
- *         if (cmd === "bar") { // do something }
- *         if (cmd === "FOO") { // do something }
- *         if (cmd === "BAR") { // do something }
- *         if (cmd === "ctrl_foobar") { // do something }
- *     },
- *     kbs,
- *     { trackState: true },
- **/
+import { useEffect, useRef, useState } from "react";
+import { Key, KB } from "./InputStream.js";
 
 export default function useKeybinds<T extends KbConfig = any>(
     handler: (cmd: Command<typeof kbConfig> | null) => void,
     kbConfig: T,
     opts?: UseKbOpts,
-) {
-    const [data, setData] = useState<InputData<T>>({
+): Data<T> {
+    /* Set default opts but override if provided */
+    opts = { trackState: false, pause: false, ...opts };
+
+    const [data, setData] = useState<Data<T>>({
         register: "",
         command: "",
     });
 
-    /* Set default opts but override if provided */
-    opts = { trackState: false, ...opts };
+    const unsubscribers = useRef<(() => void)[]>([]);
 
-    const kb = useRef<KeyBinds<T> | null>(
-        kbConfig ? new KeyBinds(kbConfig) : null,
-    );
-
-    useInput((input, key) => {
-        kb.current?.handleStdIn(input, key);
-
-        const command = kb.current?.getCommand() || null;
-
-        opts.trackState &&
-            setData({
-                command: command ?? "",
-                register: kb.current?.getRegister() || "",
+    useEffect(() => {
+        const unsubscribe = KB.subscribe(getKeybindState);
+        unsubscribers.current.push(unsubscribe);
+        return () => {
+            unsubscribers.current.forEach((u) => {
+                u();
             });
+        };
+    }, []); // only on mount/unmount (on trackState change would cause excess listeners )
+
+    function getKeybindState() {
+        KB.processKeybinds(kbConfig);
+
+        const register = KB.getRegister() || "";
+        const command = KB.getCommand() || null;
 
         handler(command);
-    });
+
+        if (opts?.trackState) {
+            setData({
+                ...data,
+                register,
+                command: command ?? "",
+            });
+        }
+    }
 
     return data;
 }
@@ -74,12 +57,23 @@ export type KbConfig = {
 export type Binding = { key?: keyof Key; input?: string };
 
 export type UseKbOpts = {
+    /* Default false. returns { register: string; command: string }
+     * 'register' stores the last 1-2 alphanumeric key presses and is wiped out
+     * when a command is matched
+     * 'command' is the last command to have been matched */
     trackState?: boolean;
+
+    /* Default false. Toggle this hooks ability to respond to std input */
+    pause?: boolean;
 };
 
-export type InputData<T extends KbConfig> = {
+type Data<T extends KbConfig> = {
     register: string;
     command: Command<T> | "";
 };
 
 export type Command<T extends Readonly<KbConfig>> = keyof T;
+
+export type Handler<T extends KbConfig = any> = (
+    cmd: Command<T> | null,
+) => void;
