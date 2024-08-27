@@ -5,7 +5,9 @@
     "main": "dist/useKeybinds.js",
     "scripts": {
         "compile": "tsc",
-        "start": "tsc && node ./dist/root.js"
+        "start": "tsc && node ./dist/root.js",
+        "start:uncaught": "tsc && node --trace-uncaught ./dist/root.js",
+        "start:exit": "tsc && node --trace-exit ./dist/root.js"
     },
     "keywords": [
         "ink",
@@ -19,7 +21,9 @@
     "dependencies": {
         "@types/react": "latest",
         "ink": "latest",
-        "react": "latest"
+        "react": "latest",
+        "shallow-equal": "^3.1.0",
+        "why-is-node-running": "^3.2.0"
     },
     "devDependencies": {
         "@babel/preset-env": "latest",

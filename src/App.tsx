@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Text, useApp } from "ink";
+import { Box, Text, useApp, useInput } from "ink";
 import useKeybinds, { KbConfig } from "./useKeybinds.js";
 
 const kbs = {
@@ -39,92 +39,48 @@ export default function App(): React.ReactNode {
     const [a, setA] = useState(false);
     const { exit } = useApp();
 
-    const { command, register } = useKeybinds(
-        (cmd) => {
-            if (cmd === "just_return") {
-                setMsg("just_return triggered");
-            }
+    const { onCmd, command, register } = useKeybinds(kbs, { trackState: true });
 
-            if (cmd === "quit") {
-                process.exit();
-            }
+    onCmd("just_return", () => {
+        setMsg("just return triggered");
+    });
 
-            if (cmd === "ctrl_foobar") {
-                setMsg("ctrl_foobar triggered");
-            }
+    onCmd("quit", () => {
+        exit();
+    });
 
-            if (cmd === "foo") {
-                setMsg("foo triggered");
-                setA(!a);
-            }
+    onCmd("ctrl_foobar", () => {
+        setMsg("ctrl_foobar triggered");
+    });
 
-            if (cmd === "bar") {
-                setMsg("bar triggered");
-                exit();
-            }
+    onCmd("foo", () => {
+        setMsg("foo trigger brah");
+    });
 
-            if (cmd === "quz") {
-                setMsg("quz triggered");
-            }
+    onCmd("quz", () => {
+        setMsg("quz triggered");
+        setA(!a);
+    });
 
-            if (cmd === "FOO") {
-                setMsg("FOO triggered");
-            }
+    onCmd("FOO", () => {
+        setMsg("FOO triggered");
+    });
 
-            if (cmd === "BAR") {
-                setMsg("BAR triggered");
-            }
+    onCmd("BAR", () => {
+        setMsg("BAR triggered");
+    });
 
-            if (cmd === "downArrow") {
-                setMsg("downArrow triggered");
-            }
-        },
-        kbs,
-        { trackState: true },
-    );
+    onCmd("downArrow", () => {
+        setMsg("downArrow triggered");
+    });
 
-    useKeybinds(
-        (cmd) => {
-            if (cmd === "just_return") {
-                setMsg("This should never run");
-            }
-            if (cmd === "quit") {
-                process.exit();
-            }
+    // Compatible with useInput
+    useInput((input, key) => {
+        if (input === "b") {
+            console.log("b from useInput");
+        }
+    });
 
-            if (cmd === "ctrl_foobar") {
-                setMsg("This should never run");
-            }
-
-            if (cmd === "foo") {
-                setMsg("This should never run");
-            }
-
-            if (cmd === "bar") {
-                setMsg("This should never run");
-            }
-
-            if (cmd === "quz") {
-                setMsg("This should never run");
-            }
-
-            if (cmd === "FOO") {
-                setMsg("This should never run");
-            }
-
-            if (cmd === "BAR") {
-                setMsg("This should never run");
-            }
-
-            if (cmd === "downArrow") {
-                setMsg("This should never run");
-            }
-        },
-        kbs,
-        { trackState: true },
-    );
-
-    // <Text>{`Register: ${register}`}</Text>
     if (a) {
         return <>//</>;
     }
@@ -137,6 +93,7 @@ export default function App(): React.ReactNode {
             </Text>
             <Box display="flex" flexDirection="column">
                 <Text>{`Command: ${command ? command : ""}`}</Text>
+                <Text>{`Register: ${register}`}</Text>
             </Box>
         </>
     );

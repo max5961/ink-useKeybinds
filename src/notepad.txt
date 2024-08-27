@@ -1,0 +1,58 @@
+Should also create an "any string" to emit an event whenever there is a keypress
+
+Multiple useKeybinds hooks should be allowed to respond to the same command, but
+if there are conflicting keybinds, the winner of the race should get their
+command (single source of truth). The problem right now is pausing input and
+changing keybind config.  Right now pausing input could create problems where
+parent components become last in the event listener callback list, order gets
+jumbled and therefore hard to track conflicting keybind problems. Also, the
+current implementation suffers the same problem as just stated if we resubscribe
+on a change to the keybind config.  Overall, this current implemenentation is
+not that robust.  Ink's native useInput hook also causes problems if you try to
+pause input and it also doesn't update state on every keypress, only when the
+handler updates state itself.  Ink reruns the callback on every state change
+which allows to change between callbacks, but it doesn't allow to 'pause'
+useInput i.e. inputListening && useInput(cb) creates an error.  Maybe the
+solution is to instead of using useEffect to only modify on mount/unmount, but
+to instead modify the callback every time the hook runs. This should be the most
+simple and still wouldn't create unnecessary state changes as this wouldn't
+force a state update itself. Doing so this way also makes it so that we can't
+possibly have excess listeners. Would need to store the unsubscribe function
+somewhere though, preferably in a ref so it doesn't force a double render every
+state change
+
+Possible overthinking all of this...if you have a two useKeybinds hooks and one
+is testing "j" and the other is testing "jj" then predicting which hook is first
+to the race is kind of irrelevant anyways lol.  Right?  However, the idea that
+the listeners should be subscribed and unsubscribed every time the hook executes
+should be a thing because that allows to easily pause/unpause the hook reading
+command data.
+
+It could be nice if onCmd handlers were captured on the tree node level.  For
+example, if an onCmd function executes on the root node level, then any onCmd
+function that responds to the same command will be nullified somehow.  I'm not
+sure if that would be a good thing or a bad thing really....probably
+unnecessary. That would still require that event handlers created bythe onCmd
+function would stay in order which would be very difficult.
+
+Reminder that this hook was necessary because of stuff like "m" triggering a
+command in one useKeybinds hook but not another, so the other was still waiting
+on another keypress before it cleared its register.  The single source of truth
+is necessary when handling keybinds so this needed to be done and it also allows
+to increase the maxlisteners.
+
+Instead of the hook returning the cmd, it can return the onCmd function and as a
+second argument, an isActive/isFocus to toggle whether the onCmd function
+returns a dud.  For the InputForm component, will need to however actually
+toggle the StdInEmitter to stop parsing the stdin stream.
+
+FOR PROCESS.EXIT to exit app
+Do we really need this or is it enough to just pause our process? Basically, we
+want to maintain compatibility with the builtin useInput hook that might be
+utilizing process.stdin.  Also if we pause process.stdin will that effect the
+useInput hook?  Maybe the better solution is to instead create a different
+stream object separate from process.stdin if that is possible. Doing so this way
+doesn't maintain compatibility with other code that may rely on process.stdin
+
+Unfortunately it is necessary to have this process.exit.  It would be better if
+we just killed another stream instead of relying on process.stdin
