@@ -79,65 +79,30 @@ function replaceKeyRegister(mapping: NonAlphaKeys): void {
     inputState.keyRegister = mapping;
 }
 
-// /* TODO
-//  * public
-//  * This might be helpful for temporarily pausing all STD_IN events, but still
-//  * keep the stream going. */
-// function setShouldProcess(b: boolean): void {
-//     inputState.shouldProcess = b;
-// }
-//
-// /* TODO
-//  * useKeybinds(config, { overrideOthers: true })
-//  * Processes ONLY this config, or any others that have the same settings.  This
-//  * would be helpful for switching between modes such as when you need to process
-//  * text input in a form, you would want to make sure you didn't have any conflicting
-//  * keybinds */
-// function overrideConfig(config: KbConfig, override: boolean) {
-//     inputState.override = override;
-//     processConfig(config);
-//
-//     return () => {
-//         inputState.override = !inputState.override;
-//     };
-// }
-
 /* public */
 function processConfig(config: KbConfig): void {
     if (!inputState.shouldProcess) return;
+
+    /* Is there a non alphanumeric keypress?  We need to know so that bindings
+     * such as just "f" should not trigger ctrl + f for example. */
+    const hasNonAlphaKey = Object.values(inputState.keyRegister).some((b) => b);
 
     for (const command in config) {
         const binding = config[command];
 
         let match = false;
         if (Array.isArray(binding)) {
-            match = binding.some((b) => checkMatch(b));
+            match = binding.some((b) => checkMatch(b, hasNonAlphaKey));
         } else {
-            match = checkMatch(binding);
+            match = checkMatch(binding, hasNonAlphaKey);
         }
 
         if (match) return setCommand(command);
     }
 }
 
-function checkMatch(binding: Binding): boolean {
-    // Prevent ctrl + f triggering 'f' for example
-    if (inputState.keyRegister.ctrl) {
-        if (binding.key && binding.input) {
-            return (
-                inputState.keyRegister[binding.key] &&
-                inputState.charRegister === binding.input
-            );
-        }
-
-        // Special key only
-        if (binding.key && !binding.input) {
-            return inputState.keyRegister[binding.key];
-        }
-
-        return false;
-    }
-
+function checkMatch(binding: Binding, hasNonAlphakey: boolean): boolean {
+    // key + char input
     if (binding.key && binding.input) {
         return (
             inputState.keyRegister[binding.key] &&
@@ -145,8 +110,17 @@ function checkMatch(binding: Binding): boolean {
         );
     }
 
-    // Char input only
+    // key only
+    if (binding.key && !binding.input) {
+        if (inputState.charRegister.length) return false;
+
+        return inputState.keyRegister[binding.key];
+    }
+
+    // char input only
     if (!binding.key && binding.input) {
+        if (hasNonAlphakey) return false;
+
         return inputState.charRegister === binding.input;
     }
 
@@ -202,6 +176,8 @@ function handleKeypress(): void {
 
     replaceKeyRegister(map);
 
+    // console.log(inputState.keyRegister);
+
     /* esc key be default clears charRegister.  Otherwise the only other time the
      * charRegister is cleared is when a command is set, or the charRegister would
      * otherwise exceed a size of 2 */
@@ -213,7 +189,6 @@ function handleKeypress(): void {
 
     /* Ctrl + lowercase letter.  Unfortunately, I don't believe there is any way
      * within Nodejs to recognize other combinations of special keys. */
-    if (stdin.length !== 1) return;
     if (stdin.charCodeAt(0) >= 1 && stdin.charCodeAt(0) <= 26) {
         const letter = String.fromCharCode(stdin.charCodeAt(0) + 96);
         inputState.charRegister = letter;
@@ -244,22 +219,15 @@ function pause(): void {
     EMITTER.removeListener(EVT.appStatus, handleAppStatus);
 
     inputState.listening = false;
-
-    // const stdinCount = process.stdin.listenerCount(EVT.keypress);
-    // if (stdinCount <= 1 && !keypressCount) {
-    //     process.keypress.pause();
-    // }
 }
 
 /* When the app exits whether intentionally or by an error, all components unmount
  * and the useKeybinds hook makes sure all listeners are cleaned up on unmount.
  * Without removing all listeners, the node process won't end by itself */
 function handleAppStatus(): void {
-    const stdinListeners = EMITTER.listeners(EVT.keypress).length;
-    // Thsi is 0 when after any command
-    // console.log(stdinListeners);
+    const keypressListeners = EMITTER.listeners(EVT.keypress).length;
 
-    if (!stdinListeners) {
+    if (!keypressListeners) {
         pause();
     }
 }
@@ -273,3 +241,26 @@ const KeypressRegister = {
 };
 
 export default KeypressRegister;
+
+// /* TODO
+//  * public
+//  * This might be helpful for temporarily pausing all STD_IN events, but still
+//  * keep the stream going. */
+// function setShouldProcess(b: boolean): void {
+//     inputState.shouldProcess = b;
+// }
+//
+// /* TODO
+//  * useKeybinds(config, { overrideOthers: true })
+//  * Processes ONLY this config, or any others that have the same settings.  This
+//  * would be helpful for switching between modes such as when you need to process
+//  * text input in a form, you would want to make sure you didn't have any conflicting
+//  * keybinds */
+// function overrideConfig(config: KbConfig, override: boolean) {
+//     inputState.override = override;
+//     processConfig(config);
+//
+//     return () => {
+//         inputState.override = !inputState.override;
+//     };
+// }

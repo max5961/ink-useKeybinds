@@ -27,6 +27,8 @@ const kbConfig = {
     left: { key: "left" },
     right: { key: "right" },
 
+    esc: { key: "esc" },
+
     ctrl_f: { input: "f", key: "ctrl" },
     ctrl_a: { input: "a", key: "ctrl" },
 
@@ -97,7 +99,7 @@ export default function App(): React.ReactNode {
                 <Text color="green">{` ${msg}!`}</Text>
             </Text>
             <Box display="flex" flexDirection="column">
-                <Text>{`Command: ${command ? command : ""}`}</Text>
+                <Text>{`Command: ${command}`}</Text>
                 <Text>{`Register: ${register}`}</Text>
             </Box>
         </>

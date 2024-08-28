@@ -45,7 +45,6 @@ export default function useKeybinds<T extends KbConfig = any>(
 
         if (opts?.trackState) {
             setData({
-                ...data,
                 register,
                 command: command || "",
             });
