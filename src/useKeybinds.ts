@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { emitKeypressEvents } from "readline";
-import Register, { hookDebugEmitter, Key } from "./KeypressRegister.js";
-import { shallowEqualObjects } from "shallow-equal";
+import Register from "./KeypressRegister.js";
 import { EventEmitter } from "events";
-import whyIsNodeRunning from "why-is-node-running";
+import { EVT } from "./KeypressRegister.js";
+import { Key } from "./HexMap.js";
 
-emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 process.stdin.resume();
 process.stdin.setEncoding("utf-8");
@@ -13,37 +11,29 @@ process.stdin.setEncoding("utf-8");
 export default function useKeybinds<T extends KbConfig = any>(
     kbConfig: T,
     opts?: UseKbOpts,
-): Data<T> & { onCmd: OnCmd<T> } {
+): KbData<T> & { onCmd: OnCmd<T> } {
     Register.listen();
 
     /* Set default opts but override if provided */
     opts = { trackState: false, pause: false, override: false, ...opts };
 
-    const [data, setData] = useState<Data<T>>({
+    const [data, setData] = useState<KbData<T>>({
         register: "",
         command: "",
     });
 
-    const emitter = useRef<EventEmitter>(new EventEmitter());
-    // const emitter = useRef<EventEmitter>(hookDebugEmitter);
+    const commandEmitter = useRef<EventEmitter>(new EventEmitter());
 
-    // Create unsubscribe refs
-    const stdinRef = useRef<() => void>(() => {});
-    const charDownRef = useRef<() => void>(() => {});
-
-    // unsubscribe
-    stdinRef.current();
-    charDownRef.current();
-
-    // resubscribe
-    stdinRef.current = Register.subscribe("STD_IN", handleStdin);
-    charDownRef.current = Register.subscribe("CHAR_DOWN", () => {});
+    /* This makes sure were don't end up with excess listeners every time the
+     * hook runs */
+    const unsubscribe = useRef<() => void>(() => {});
+    unsubscribe.current();
+    unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
 
     useEffect(() => {
         return () => {
-            stdinRef.current();
-            charDownRef.current();
-            emitter.current.removeAllListeners();
+            unsubscribe.current();
+            commandEmitter.current.removeAllListeners();
         };
     }, []);
 
@@ -62,31 +52,27 @@ export default function useKeybinds<T extends KbConfig = any>(
         }
 
         if (command) {
-            emitter.current.emit(command);
+            commandEmitter.current.emit(command);
         }
     }
 
-    emitter.current.removeAllListeners();
+    commandEmitter.current.removeAllListeners();
 
     function onCmd<T extends KbConfig>(
         cmd: WONums<T>,
         handler: () => void,
     ): any {
-        emitter.current.on(cmd, handler);
+        commandEmitter.current.on(cmd, handler);
     }
 
     return { onCmd, ...data };
 }
 
-export type KbHandler<T extends KbConfig = any> = (
-    cmd: Command<T> | null,
-) => void;
-
 export type KbConfig = {
     [key: string]: Binding[] | Binding;
 };
 
-export type Binding = { key?: keyof Key; input?: string };
+export type Binding = { key?: Key; input?: string };
 
 export type UseKbOpts = {
     /* Default false. returns { register: string; command: string }
@@ -102,23 +88,19 @@ export type UseKbOpts = {
     override?: boolean;
 };
 
-type Data<T extends KbConfig> = {
+export type KbData<T extends KbConfig> = {
     register: string;
     command: Command<T> | "";
 };
 
-interface OnCmd<T extends KbConfig> {
+export interface OnCmd<T extends KbConfig> {
     (cmd: WONums<T>, handler: () => any): void;
 }
 
 export type Command<T extends Readonly<KbConfig>> = keyof T;
 
-export type Handler<T extends KbConfig = any> = (
-    cmd: Command<T> | null,
-) => void;
-
-// union type of the keys of an object but excludes possible number types that
-// aren't compatible with types that expect strings
+/* union type of the keys of an object but excludes possible number types that
+ * aren't compatible with types that expect strings */
 export type WONums<T extends object> = T extends object
     ? keyof T extends string | symbol
         ? keyof T
