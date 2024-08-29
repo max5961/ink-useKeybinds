@@ -3,11 +3,13 @@
 const OVERRIDE = new Set<string>();
 
 function update(hookId: string, override: boolean): void {
-    if (override) {
-        OVERRIDE.add(hookId);
-    } else {
-        OVERRIDE.delete(hookId);
-    }
+    setImmediate(() => {
+        if (override) {
+            OVERRIDE.add(hookId);
+        } else {
+            OVERRIDE.delete(hookId);
+        }
+    });
 }
 
 function canProcess(hookId: string): boolean {

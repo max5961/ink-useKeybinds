@@ -6,8 +6,7 @@
     "scripts": {
         "compile": "tsc",
         "start": "tsc && node ./dist/root.js",
-        "start:uncaught": "tsc && node --trace-uncaught ./dist/root.js",
-        "start:exit": "tsc && node --trace-exit ./dist/root.js"
+        "start:debug": "tsc && node --inspect ./dist/root.js"
     },
     "keywords": [
         "ink",

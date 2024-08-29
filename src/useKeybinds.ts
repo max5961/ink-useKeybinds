@@ -7,7 +7,6 @@ import { randomUUID } from "crypto";
 import ProcessingGate from "./ProcessingGate.js";
 
 process.stdin.setRawMode(true);
-process.stdin.resume();
 process.stdin.setEncoding("utf-8");
 
 export default function useKeybinds<T extends KbConfig = any>(

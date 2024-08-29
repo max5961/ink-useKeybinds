@@ -49,9 +49,15 @@ export function useFormInput(
     onCmd("returnKey" as "KEYPRESS", () => {
         if (!state._insert) return;
 
-        const nextStr = `${state.str}\n`;
-
-        setState({ ...state, idx: state.idx + 1, str: nextStr });
+        if (state.str.match(/\n {4}[\w\s]+$/gm)) {
+            setState({
+                ...state,
+                str: `${state.str}\n    `,
+                idx: state.idx + 5,
+            });
+        } else {
+            setState({ ...state, idx: state.idx + 1, str: `${state.str}\n` });
+        }
     });
 
     onCmd("tab" as "KEYPRESS", () => {

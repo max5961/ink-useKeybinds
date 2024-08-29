@@ -31,7 +31,7 @@ const inputState: InputState = {
 export const EVT = {
     keypress: "KEYPRESS",
     appStatus: "APP_STATUS",
-    readable: "readable",
+    data: "data",
 } as const;
 
 const EMITTER = new EventEmitter();
@@ -140,16 +140,9 @@ function checkMatch(binding: Binding, hasNonAlphakey: boolean): boolean {
     return false;
 }
 
-function handleKeypress(): void {
+function handleKeypress(stdin: string): void {
     inputState.command = null;
     inputState.lastCharKey = "";
-
-    let chunk: Buffer;
-    let stdin: string = "";
-
-    while ((chunk = process.stdin.read()) !== null) {
-        stdin += chunk.toString("utf-8");
-    }
 
     /* Handle sigint before all else */
     if (stdin === HEX_MAP.sigint) {
@@ -228,15 +221,17 @@ function listen(): void {
         return;
     }
 
-    process.stdin.on(EVT.readable, handleKeypress);
+    process.stdin.resume();
+    process.stdin.on(EVT.data, handleKeypress);
     EMITTER.on(EVT.appStatus, handleAppStatus);
 
     inputState.listening = true;
 }
 
 function pause(): void {
-    process.stdin.removeListener(EVT.readable, handleKeypress);
+    process.stdin.removeListener(EVT.data, handleKeypress);
     EMITTER.removeListener(EVT.appStatus, handleAppStatus);
+    process.stdin.pause();
 
     inputState.listening = false;
 }
@@ -246,6 +241,7 @@ function pause(): void {
  * Without removing all listeners, the node process won't end by itself */
 function handleAppStatus(): void {
     const keypressListeners = EMITTER.listeners(EVT.keypress).length;
+    // console.log(`Keypress Listeners: ${keypressListeners}`);
 
     if (!keypressListeners) {
         pause();
