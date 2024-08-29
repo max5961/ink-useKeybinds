@@ -1,6 +1,12 @@
 import EventEmitter from "events";
 import { Binding, KbConfig } from "./useKeybinds.js";
-import { HEX_MAP, newKeyRegister, NonAlphaKeys } from "./HexMap.js";
+import {
+    HEX_MAP,
+    isSpecialKey,
+    newKeyRegister,
+    NonAlphaKeys,
+} from "./HexMap.js";
+import ProcessingGate from "./ProcessingGate.js";
 
 type InputState = {
     listening: boolean;
@@ -8,17 +14,17 @@ type InputState = {
     charRegister: string;
     keyRegister: NonAlphaKeys;
     command: string | null;
-    lastCharKey: string | null;
+    lastCharKey: string;
     override: boolean;
 };
 
 const inputState: InputState = {
     listening: false,
     charRegister: "",
+    lastCharKey: "",
     keyRegister: newKeyRegister(),
     command: null,
     shouldProcess: true,
-    lastCharKey: null,
     override: false,
 };
 
@@ -60,6 +66,11 @@ function getCharRegister(): string {
     return inputState.charRegister;
 }
 
+/* public */
+function getLastChar(): string {
+    return inputState.lastCharKey;
+}
+
 function setCommand(command: string): void {
     inputState.command = command;
     inputState.charRegister = "";
@@ -80,8 +91,10 @@ function replaceKeyRegister(mapping: NonAlphaKeys): void {
 }
 
 /* public */
-function processConfig(config: KbConfig): void {
-    if (!inputState.shouldProcess) return;
+function processConfig(config: KbConfig, hookId: string): void {
+    // console.log("CAN PROCESS RESULT: ");
+    // console.log(ProcessingGate.canProcess(hookId));
+    if (!ProcessingGate.canProcess(hookId)) return;
 
     /* Is there a non alphanumeric keypress?  We need to know so that bindings
      * such as just "f" should not trigger ctrl + f for example. */
@@ -112,7 +125,7 @@ function checkMatch(binding: Binding, hasNonAlphakey: boolean): boolean {
 
     // key only
     if (binding.key && !binding.input) {
-        if (inputState.charRegister.length) return false;
+        // if (inputState.charRegister.length) return false;
 
         return inputState.keyRegister[binding.key];
     }
@@ -129,7 +142,7 @@ function checkMatch(binding: Binding, hasNonAlphakey: boolean): boolean {
 
 function handleKeypress(): void {
     inputState.command = null;
-    inputState.lastCharKey = null;
+    inputState.lastCharKey = "";
 
     let chunk: Buffer;
     let stdin: string = "";
@@ -176,8 +189,6 @@ function handleKeypress(): void {
 
     replaceKeyRegister(map);
 
-    // console.log(inputState.keyRegister);
-
     /* esc key be default clears charRegister.  Otherwise the only other time the
      * charRegister is cleared is when a command is set, or the charRegister would
      * otherwise exceed a size of 2 */
@@ -197,7 +208,16 @@ function handleKeypress(): void {
         replaceKeyRegister(map);
     } else {
         stdin && pushCharRegister(stdin);
+
+        if (isSpecialKey(stdin)) {
+            inputState.charRegister = inputState.lastCharKey = "";
+        } else {
+            inputState.lastCharKey = stdin;
+        }
     }
+
+    // console.log(inputState.lastCharKey.length);
+    // inputState.lastCharKey && console.log(inputState.lastCharKey);
 
     EMITTER.emit(EVT.keypress);
 }
@@ -234,33 +254,12 @@ function handleAppStatus(): void {
 
 const KeypressRegister = {
     listen,
+    pause,
     subscribe,
     processConfig,
     getCommand,
     getCharRegister,
+    getLastChar,
 };
 
 export default KeypressRegister;
-
-// /* TODO
-//  * public
-//  * This might be helpful for temporarily pausing all STD_IN events, but still
-//  * keep the stream going. */
-// function setShouldProcess(b: boolean): void {
-//     inputState.shouldProcess = b;
-// }
-//
-// /* TODO
-//  * useKeybinds(config, { overrideOthers: true })
-//  * Processes ONLY this config, or any others that have the same settings.  This
-//  * would be helpful for switching between modes such as when you need to process
-//  * text input in a form, you would want to make sure you didn't have any conflicting
-//  * keybinds */
-// function overrideConfig(config: KbConfig, override: boolean) {
-//     inputState.override = override;
-//     processConfig(config);
-//
-//     return () => {
-//         inputState.override = !inputState.override;
-//     };
-// }

@@ -24,6 +24,10 @@ export const HEX_MAP = {
     f12: "\x1B[24~",
 } as const;
 
+export function isSpecialKey(code: string): boolean {
+    return Object.values(HEX_MAP).some((val) => val === code);
+}
+
 export function newKeyRegister(): NonAlphaKeys {
     const keyRegister = {} as NonAlphaKeys;
     for (const key in HEX_MAP) {
