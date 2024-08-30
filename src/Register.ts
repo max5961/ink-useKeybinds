@@ -91,10 +91,14 @@ function replaceKeyRegister(mapping: NonAlphaKeys): void {
 }
 
 /* public */
-function processConfig(config: KbConfig, hookId: string): void {
+function processConfig(
+    config: KbConfig,
+    hookId: string,
+    priority: number,
+): void {
     // console.log("CAN PROCESS RESULT: ");
     // console.log(ProcessingGate.canProcess(hookId));
-    if (!ProcessingGate.canProcess(hookId)) return;
+    if (!ProcessingGate.canProcess(hookId, priority)) return;
 
     /* Is there a non alphanumeric keypress?  We need to know so that bindings
      * such as just "f" should not trigger ctrl + f for example. */

@@ -5,6 +5,7 @@ import { EVT } from "./Register.js";
 import { Key } from "./HexMap.js";
 import { randomUUID } from "crypto";
 import ProcessingGate from "./ProcessingGate.js";
+import { useStdin } from "ink";
 
 process.stdin.setRawMode(true);
 process.stdin.setEncoding("utf-8");
@@ -18,7 +19,7 @@ export default function useKeybinds<T extends KbConfig = any>(
     const [ID] = useState(randomUUID());
 
     /* Set default opts but override if provided */
-    opts = { trackState: false, override: false, ...opts };
+    opts = { trackState: false, priority: 1, ...opts };
 
     const [data, setData] = useState<KbData<T>>({
         register: "",
@@ -32,20 +33,33 @@ export default function useKeybinds<T extends KbConfig = any>(
      * hook runs */
     const unsubscribe = useRef<() => void>(() => {});
     unsubscribe.current();
-    unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
 
-    const override = !!opts.override;
-    ProcessingGate.update(ID, override);
+    const priority = opts.priority === undefined ? 1 : opts.priority;
 
     useEffect(() => {
+        ProcessingGate.update(ID, priority);
+    }, [opts.priority]);
+
+    if (ProcessingGate.canProcess(ID, priority)) {
+        // console.log(`CAN PROCESS: ${ID}`);
+        unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
+    }
+
+    useEffect(() => {
+        ProcessingGate.update(ID, priority);
+        // console.log(`${ID} ${ProcessingGate.canProcess(ID, priority)}`);
+        // console.log(ProcessingGate.debug());
+        // console.log("");
+
         return () => {
             unsubscribe.current();
             commandEmitter.current.removeAllListeners();
+            ProcessingGate.remove(ID);
         };
     }, []);
 
     function handleStdin() {
-        Register.processConfig(kbConfig, ID);
+        Register.processConfig(kbConfig, ID, priority);
 
         const register = Register.getCharRegister();
         const command = Register.getCommand();
@@ -71,9 +85,15 @@ export default function useKeybinds<T extends KbConfig = any>(
         cmd: WONums<T> | typeof EVT.keypress,
         handler: (char: string) => void,
     ): any {
-        if (ProcessingGate.canProcess(ID)) {
+        if (ProcessingGate.canProcess(ID, priority)) {
             commandEmitter.current.on(cmd, handler);
         }
+
+        // commandEmitter.current.on(cmd, () => {
+        //     if (ProcessingGate.canProcess(ID, priority)) {
+        //         handler(data.lastKeypress);
+        //     }
+        // });
     }
 
     return { onCmd, ...data };
@@ -92,8 +112,12 @@ export type UseKbOpts = {
      * 'command' is the last command to have been matched */
     trackState?: boolean;
 
-    /* Pauses processing of other keybinds that don't have the override option set */
-    override?: boolean;
+    /*
+     * Only the hook(s) with the highest priority will process their configs and
+     * emit commands.  Defaults to 1, so setting priority to 0 is one way of
+     * muting a set of keybinds
+     * */
+    priority?: number;
 };
 
 export type KbData<T extends KbConfig> = {

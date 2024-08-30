@@ -21,32 +21,27 @@ export function useFormInput(
 ) {
     const [state, setState] = useState<InputState>({
         str: "",
-        idx: 1,
+        idx: 0,
         _insert: false,
     });
 
-    const config: KbConfig = {};
-    if (state._insert) {
-        Object.assign(config, kb, { exit });
-    } else {
-        Object.assign(config, { enter });
-    }
+    const { onCmd, command, register } = useKeybinds(kb, {
+        priority: state._insert ? Infinity : -Infinity,
+    });
 
-    const { onCmd, command, register } = useKeybinds(config);
-
-    onCmd("left" as "KEYPRESS", () => {
+    onCmd("left", () => {
         if (state._insert && state.idx > 0) {
             setState({ ...state, idx: state.idx - 1 });
         }
     });
 
-    onCmd("right" as "KEYPRESS", () => {
+    onCmd("right", () => {
         if (state._insert && state.idx < state.str.length) {
             setState({ ...state, idx: state.idx + 1 });
         }
     });
 
-    onCmd("returnKey" as "KEYPRESS", () => {
+    onCmd("returnKey", () => {
         if (!state._insert) return;
 
         if (state.str.match(/\n {4}[\w\s]+$/gm)) {
@@ -60,7 +55,7 @@ export function useFormInput(
         }
     });
 
-    onCmd("tab" as "KEYPRESS", () => {
+    onCmd("tab", () => {
         if (!state._insert) return;
 
         const nextStr = `${state.str}    `;
@@ -68,7 +63,7 @@ export function useFormInput(
         setState({ ...state, idx: state.idx + 4, str: nextStr });
     });
 
-    onCmd("backspace" as "KEYPRESS", () => {
+    onCmd("backspace", () => {
         if (!state._insert) return;
         const { str, idx } = state;
 
@@ -76,18 +71,6 @@ export function useFormInput(
         const nextStr = str.slice(0, idx > 0 ? idx - 1 : 0) + str.slice(idx);
 
         setState({ ...state, str: nextStr, idx: nextIdx });
-    });
-
-    onCmd("enter" as "KEYPRESS", () => {
-        if (!state._insert) {
-            setState({ ...state, _insert: true, idx: state.str.length });
-        }
-    });
-
-    onCmd("exit" as "KEYPRESS", () => {
-        if (state._insert) {
-            setState({ ...state, _insert: false });
-        }
     });
 
     onCmd("KEYPRESS", (char: string) => {
@@ -106,6 +89,19 @@ export function useFormInput(
                 idx: nextIdx,
             });
         }
+    });
+
+    const controlKb = { enter, exit } satisfies KbConfig;
+    const control = useKeybinds(controlKb, {
+        priority: 100,
+    });
+    control.onCmd("enter" as "KEYPRESS", () => {
+        console.log("ayo enter");
+        setState({ ...state, _insert: true });
+    });
+    control.onCmd("exit" as "KEYPRESS", () => {
+        console.log("ayo exit");
+        setState({ ...state, _insert: false });
     });
 
     return { state, command, register };

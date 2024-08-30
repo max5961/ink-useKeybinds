@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import useKeybinds, { KbConfig } from "./useKeybinds.js";
+import { useFormInput } from "./useFormInput.js";
+import Input from "./Input.js";
 
 const config1 = {
     quit: { input: "q" },
@@ -24,7 +26,7 @@ export default function App(): React.ReactNode {
 
     const { onCmd, register, command } = useKeybinds(config1, {
         trackState: true,
-        override: isMainCfg,
+        priority: isMainCfg ? 100 : 0,
     });
 
     // ++count;
@@ -49,7 +51,7 @@ export default function App(): React.ReactNode {
         setIsMainCfg(false);
     });
 
-    const kb2 = useKeybinds(config2, { override: !isMainCfg });
+    const kb2 = useKeybinds(config2, { priority: !isMainCfg ? 100 : 0 });
     kb2.onCmd("quit", () => {
         console.log("Quitting from config2");
         exit();
@@ -76,6 +78,8 @@ export default function App(): React.ReactNode {
         }
     });
 
+    const text = useFormInput({ input: "i" }, { key: "esc" });
+
     return (
         <>
             <Text color="blue">{isMainCfg ? "config1" : "config2"}</Text>
@@ -86,6 +90,9 @@ export default function App(): React.ReactNode {
             <Box display="flex" flexDirection="column">
                 <Text>{`Command: ${command}`}</Text>
                 <Text>{`Register: ${register}`}</Text>
+            </Box>
+            <Box borderStyle="round">
+                <Input text={text.state} />
             </Box>
         </>
     );
