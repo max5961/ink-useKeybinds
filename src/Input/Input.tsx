@@ -1,13 +1,16 @@
 import React from "react";
-import { Text, Box } from "ink";
-import { InputState } from "./useFormInput.js";
-import { Props } from "../node_modules/ink/build/components/Text.js";
+import { Text } from "ink";
+import { InputState, UseFormReturn } from "./useFormInput.js";
+import { Props } from "../../node_modules/ink/build/components/Text.js";
 import chalk from "chalk";
 
 type Color = Exclude<Props["color"], undefined>;
 
 type InputProps = {
-    text: InputState;
+    text: UseFormReturn;
+    mask?: boolean;
+    onSubmit?: () => unknown;
+    onEnter?: () => unknown;
     placeholder?: string;
     color?: Color;
     cursorColor?: Color;
@@ -15,27 +18,36 @@ type InputProps = {
 
 export default function Input({
     text,
+    mask,
     placeholder,
+    onSubmit,
+    onEnter,
     color = "cyan",
     cursorColor = "blue",
 }: InputProps): React.ReactNode {
-    const { str, idx } = text;
+    let { str, idx, emitter } = text;
 
-    let before, cursor, after: string;
+    emitter.removeAllListeners();
+    onSubmit && emitter.on("submit", onSubmit);
+    onEnter && emitter.on("enter", onEnter);
+
+    let before: string, cursor: string, after: string;
     before = cursor = after = "";
 
     for (let i = 0; i < str.length; ++i) {
+        const char = mask ? "*" : str[i];
+
         if (i < idx) {
-            before += str[i];
+            before += char;
         } else if (i === idx && str[i] !== "\n") {
-            cursor += str[i];
+            cursor += char;
         } else {
-            after += str[i];
+            after += char;
         }
     }
 
     // Prevent collapsing height
-    if (!str.length && !text._insert) {
+    if (!str.length && !text.insert) {
         return (
             <Text color="grey" dimColor>
                 {placeholder || " "}
@@ -50,7 +62,7 @@ export default function Input({
 
     before = chalk[color](before);
 
-    if (text._insert) {
+    if (text.insert) {
         cursor = chalk.inverse(chalk[cursorColor](cursor));
     } else {
         cursor = chalk[color](" ");

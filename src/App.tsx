@@ -1,99 +1,103 @@
 import React, { useState } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import useKeybinds, { KbConfig } from "./useKeybinds.js";
-import { useFormInput } from "./useFormInput.js";
-import Input from "./Input.js";
+import { Box, Text, useApp } from "ink";
+import KeybindProcessingGate from "./keybinds/KeybindProcessingGate.js";
+import KbState from "./KbState/KbState.js";
+import Keybinds, { useOnCmd } from "./Keybinds/Keybinds.js";
+import useKeybinds, { KbConfig } from "./keybinds/useKeybinds.js";
+import Command from "./Command/Command.js";
+import Input from "./Input/Input.js";
+import { useFormInput } from "./Input/useFormInput.js";
 
-const config1 = {
+const kbs = {
+    bro: { input: "b" },
+    ctrlA: { key: "ctrl", input: "a" },
     quit: { input: "q" },
-    greet: { input: "a" },
-    switchCfg: { input: "b" },
-    createErr: { key: "ctrl", input: "e" },
 } satisfies KbConfig;
 
-const config2 = {
-    quit: { input: "q" },
-    greet: { input: "c" },
-    switchCfg: { input: "d" },
-} satisfies KbConfig;
-
-let count = 0;
 export default function App(): React.ReactNode {
-    const [msg, setMsg] = useState<string>("No commands yet!");
-    const [isMainCfg, setIsMainCfg] = useState<boolean>(true);
-    const [err, setErr] = useState<boolean>(false);
-    const { exit } = useApp();
-
-    const { onCmd, register, command } = useKeybinds(config1, {
-        trackState: true,
-        priority: isMainCfg ? 100 : 0,
-    });
-
-    // ++count;
-    // console.log(`isMainCfg  |  ${count}  |  ${isMainCfg}`);
-    // console.log(`msg        |  ${count}  |  ${msg}\n`);
-
-    onCmd("quit", () => {
-        console.log("Quitting from config1");
-        exit();
-    });
-
-    onCmd("createErr", () => {
-        setErr(true);
-    });
-
-    onCmd("greet", () => {
-        setMsg("'greet' from config1");
-    });
-
-    onCmd("switchCfg", () => {
-        setMsg("'switchCfg from config1");
-        setIsMainCfg(false);
-    });
-
-    const kb2 = useKeybinds(config2, { priority: !isMainCfg ? 100 : 0 });
-    kb2.onCmd("quit", () => {
-        console.log("Quitting from config2");
-        exit();
-    });
-    kb2.onCmd("greet", () => {
-        setMsg("'greet' from config2");
-    });
-    kb2.onCmd("switchCfg", () => {
-        setMsg("'switchCfg' from config2");
-        setIsMainCfg(true);
-    });
-
-    if (err) {
-        return (
-            <Box>
-                //<Text></Text>
-            </Box>
-        );
-    }
-
-    useInput((i, k) => {
-        if (i === "o" && k.ctrl) {
-            exit();
-        }
-    });
-
-    const text = useFormInput({ input: "i" }, { key: "esc" });
-
     return (
         <>
-            <Text color="blue">{isMainCfg ? "config1" : "config2"}</Text>
-            <Text>
-                Current command is:
-                <Text color="green">{` ${msg}!`}</Text>
-            </Text>
-            <Box display="flex" flexDirection="column">
-                <Text>{`Command: ${command}`}</Text>
-                <Text>{`Register: ${register}`}</Text>
-            </Box>
-            <Box borderStyle="round">
-                <Input text={text.state} />
-            </Box>
+            <KeybindProcessingGate>
+                <BroUpdater />
+                <KbStateView />
+                <InputTest />
+                <Command />
+            </KeybindProcessingGate>
         </>
     );
 }
+
+function InputTest(): React.ReactNode {
+    const text = useFormInput();
+
+    function isValidText(str: string) {
+        return str === "no this is patrick";
+    }
+
+    function onSubmit() {
+        if (isValidText(text.str)) {
+            console.log("thanks for submitting your form bro");
+        } else {
+            console.log("buddy you have fucked up big time try again");
+        }
+    }
+
+    return (
+        <Box
+            borderStyle="round"
+            borderColor={isValidText(text.str) ? "green" : "red"}
+        >
+            <Input text={text} onSubmit={onSubmit} mask={false} />
+        </Box>
+    );
+}
+
+let i = 0;
+function BroUpdater(): React.ReactNode {
+    // console.log(`BroUpdater: ${++i}`);
+
+    const [bro, setBro] = useState("bro");
+    const { exit } = useApp();
+
+    const { onCmd } = useKeybinds<typeof kbs>(kbs);
+
+    onCmd("bro", () => {
+        setBro("bro");
+    });
+
+    onCmd("ctrlA", () => {
+        setBro("ctrl a bro");
+    });
+
+    onCmd("quit", () => {
+        exit();
+    });
+
+    return (
+        <Box borderStyle="bold" borderColor="yellow">
+            <Text>Bro Updater</Text>
+            <Box borderStyle="round">
+                <Text>{bro}</Text>
+            </Box>
+        </Box>
+    );
+}
+
+function KbStateView(): React.ReactNode {
+    return (
+        <>
+            <KbState>
+                <Box width="90%" display="flex" justifyContent="space-between">
+                    <Text>
+                        Command: <KbState.Command />
+                    </Text>
+                    <Text>
+                        Register: <KbState.Register />
+                    </Text>
+                </Box>
+            </KbState>
+        </>
+    );
+}
+
+console.log("listening...\n");

@@ -6,7 +6,8 @@
     "scripts": {
         "compile": "tsc",
         "start": "tsc && node ./dist/root.js",
-        "start:debug": "tsc && node --inspect ./dist/root.js"
+        "start:debug": "tsc && node --inspect ./dist/root.js",
+        "test": "vitest"
     },
     "keywords": [
         "ink",
@@ -22,15 +23,18 @@
         "chalk": "^5.3.0",
         "ink": "latest",
         "react": "latest",
-        "shallow-equal": "^3.1.0",
-        "why-is-node-running": "^3.2.0"
+        "shallow-equal": "^3.1.0"
     },
     "devDependencies": {
-        "@babel/preset-env": "latest",
-        "@babel/preset-typescript": "latest",
+        "@types/jest": "^29.5.12",
         "@types/node": "latest",
         "prettier": "latest",
-        "typescript": "latest"
+        "react-devtools-core": "^4.28.5",
+        "sinon": "^18.0.0",
+        "ts-node": "^10.9.2",
+        "typescript": "latest",
+        "vitest": "^2.0.5",
+        "why-is-node-running": "^3.2.0"
     },
     "type": "module",
     "files": [

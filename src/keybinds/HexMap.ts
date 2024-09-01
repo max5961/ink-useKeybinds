@@ -25,7 +25,15 @@ export const HEX_MAP = {
 } as const;
 
 export function isSpecialKey(code: string): boolean {
-    return Object.values(HEX_MAP).some((val) => val === code);
+    // return Object.values(HEX_MAP as { [key: string]: string }).some((val) => {
+    //     return val === code && val !== "m" && val !== "i";
+    // });
+    return Object.values(HEX_MAP).some((val) => {
+        if (val === code.toString()) {
+            console.log("ayo");
+        }
+        return val === code.toString();
+    });
 }
 
 export function newKeyRegister(): NonAlphaKeys {
@@ -46,3 +54,23 @@ export type NonAlphaKeys = Omit<
 > & { ctrl: boolean };
 
 export type Key = keyof NonAlphaKeys;
+// const s1 = "[";
+// const s2 = "\\";
+// const s3 = "]";
+// const s4 = "^";
+// const s5 = "_";
+// const s6 = "?";
+//
+// console.log(s1.charCodeAt(0));
+// console.log(s2.charCodeAt(0));
+// console.log(s3.charCodeAt(0));
+// console.log(s4.charCodeAt(0));
+// console.log(s5.charCodeAt(0));
+// console.log(s6.charCodeAt(0));
+//
+// console.log(String.fromCharCode(91));
+// console.log(String.fromCharCode(92));
+// console.log(String.fromCharCode(93));
+// console.log(String.fromCharCode(94));
+// console.log(String.fromCharCode(95));
+// console.log(String.fromCharCode(63));
