@@ -99,7 +99,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     insertKb[EXIT_ID] = EXIT;
 
     const insert = useKeybinds(insertKb, {
-        priority: state.insert ? "overrideHigh" : "never",
+        priority: state.insert ? "textinput" : "never",
     });
 
     insert.onCmd(EXIT_ID as Command<typeof insertKb>, () => {

@@ -18,8 +18,8 @@ export type Priority =
     | "never"
     | "default"
     | "override"
-    | "overrideHigh"
-    | "always";
+    | "always"
+    | "textinput";
 
 type ProcessingGateContext = {
     canProcess(hookId: string, priority: Priority): boolean;
@@ -39,9 +39,17 @@ export default function KeybindProcessingGate({
 
     function canProcess(hookId: string, priority: Priority): boolean {
         /*
-         * 'always' and 'never' don't interfere with other priority levels.
+         * 'always' and 'never' don't interfere with other priority levels, but
+         * 'textinput' overrides everything including 'always'
          * */
         if (priority === "always") {
+            /* textinput overrides always */
+            for (const key in gate) {
+                if (gate[key] === "textinput") {
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -55,7 +63,7 @@ export default function KeybindProcessingGate({
         const map: Record<Exclude<Priority, "never" | "always">, number> = {
             default: 0,
             override: 1,
-            overrideHigh: 2,
+            textinput: 2,
         } as const;
 
         for (const key in gate) {

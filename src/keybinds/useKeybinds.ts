@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Register, { EVT } from "./Register.js";
 import { Key } from "./HexMap.js";
 import { EventEmitter } from "events";
@@ -6,12 +6,10 @@ import { randomUUID } from "crypto";
 import { ProcessingGateContext, Priority } from "./KeybindProcessingGate.js";
 import assert from "assert";
 
-let i = 0;
 export default function useKeybinds<T extends KbConfig = any>(
     kbConfig: T,
     opts?: UseKbOpts,
 ): KbData<T> & { onCmd: OnCmd<T> } {
-    // console.log(`useKeybinds: ${++i}`);
     opts = { trackState: false, priority: "default", ...opts };
 
     const ProcessingGate = useContext(ProcessingGateContext);
@@ -31,6 +29,10 @@ export default function useKeybinds<T extends KbConfig = any>(
     }
 
     const commandEmitter = useRef<EventEmitter>(new EventEmitter());
+    const canProcess = ProcessingGate.canProcess(
+        ID,
+        opts.priority || "default",
+    );
 
     /*
      * Unsubscribe and resubscribe to keypress events so that we don't end up
@@ -38,9 +40,19 @@ export default function useKeybinds<T extends KbConfig = any>(
      * */
     const unsubscribe = useRef<() => void>(() => {});
     unsubscribe.current();
-    if (ProcessingGate.canProcess(ID, opts.priority || "default")) {
+    if (canProcess) {
         unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
     }
+
+    useEffect(() => {
+        if (canProcess) {
+            return;
+        }
+
+        if (opts.trackState) {
+            setData({ command: "", register: "" });
+        }
+    }, [canProcess]);
 
     useEffect(() => {
         ProcessingGate.updatePriority(ID, opts.priority || "default");
@@ -80,15 +92,13 @@ export default function useKeybinds<T extends KbConfig = any>(
         cmd: WONums<T>,
         handler: (stdin: string) => void,
     ): any {
-        if (ProcessingGate && ProcessingGate.canProcess(ID, opts!.priority!)) {
+        // if (ProcessingGate && ProcessingGate.canProcess(ID, opts!.priority!)) {
+        //     commandEmitter.current.on(cmd, handler);
+        // }
+
+        if (canProcess) {
             commandEmitter.current.on(cmd, handler);
         }
-
-        // commandEmitter.current.on(cmd, () => {
-        //     if (ProcessingGate.canProcess(ID, priority)) {
-        //         handler(data.lastKeypress);
-        //     }
-        // });
     }
 
     return { onCmd, ...data };
