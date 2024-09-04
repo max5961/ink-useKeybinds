@@ -9,8 +9,8 @@ type Color = Exclude<Props["color"], undefined>;
 type InputProps = {
     text: UseFormReturn;
     mask?: boolean;
-    onSubmit?: () => unknown;
-    onEnter?: () => unknown;
+    onSubmit?: (stdin: string) => unknown;
+    onEnter?: (stdin: string) => unknown;
     placeholder?: string;
     color?: Color;
     cursorColor?: Color;

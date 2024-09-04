@@ -6,30 +6,39 @@ import Input from "../Components/Input/Input.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
 import { KbConfig } from "../useKeybinds.js";
 import Keybinds, { useOnCmd } from "../Keybinds.js";
+import Command, { Commands } from "../Components/Command/Command.js";
 
 const kbs = {
-    bro: { input: "b" },
+    foo: { input: "b" },
     ctrlA: { key: "ctrl", input: "a" },
     quit: { input: "q" },
 } satisfies KbConfig;
+
+const commands: Commands = {
+    foo: () => {
+        console.log("foo command");
+    },
+    bar: () => {
+        console.log("bar command");
+    },
+};
 
 export default function App(): React.ReactNode {
     return (
         <>
             <KeybindProcessingGate>
                 <Keybinds config={kbs}>
-                    <BroUpdater />
+                    <FooUpdater />
                     <InputTest />
                     <KbStateView />
+                    <Command commands={commands} />
                 </Keybinds>
             </KeybindProcessingGate>
         </>
     );
 }
 
-let j = 0;
 const InputTest = React.memo(function InputTest(): React.ReactNode {
-    console.log(`INPUT: ${++j}`);
     const text = useFormInput();
 
     function isValidText(str: string) {
@@ -38,9 +47,9 @@ const InputTest = React.memo(function InputTest(): React.ReactNode {
 
     function onSubmit() {
         if (isValidText(text.str)) {
-            console.log("thanks for submitting your form bro");
+            console.log("thanks for submitting your form");
         } else {
-            console.log("buddy you have fucked up big time try again");
+            console.log("wrong passphrase try again");
         }
     }
 
@@ -54,21 +63,18 @@ const InputTest = React.memo(function InputTest(): React.ReactNode {
     );
 });
 
-// let i = 0;
-function BroUpdater(): React.ReactNode {
-    // console.log(`BroUpdater: ${++i}`);
-
-    const [bro, setBro] = useState("bro");
+function FooUpdater(): React.ReactNode {
+    const [foo, setFoo] = useState("foo");
     const { exit } = useApp();
 
     const onCmd = useOnCmd<typeof kbs>();
 
-    onCmd("bro", () => {
-        setBro("bro");
+    onCmd("foo", () => {
+        setFoo("foo");
     });
 
     onCmd("ctrlA", () => {
-        setBro("ctrl a bro");
+        setFoo("ctrl a foo");
     });
 
     onCmd("quit", () => {
@@ -79,15 +85,13 @@ function BroUpdater(): React.ReactNode {
         <Box borderStyle="bold" borderColor="yellow">
             <Text>Bro Updater</Text>
             <Box borderStyle="round">
-                <Text>{bro}</Text>
+                <Text>{foo}</Text>
             </Box>
         </Box>
     );
 }
 
-// let k = 0;
 function KbStateView(): React.ReactNode {
-    // console.log(`kbstate: ${++k}`);
     return (
         <>
             <KbState>

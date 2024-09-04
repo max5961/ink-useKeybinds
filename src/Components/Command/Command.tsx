@@ -2,24 +2,25 @@ import React from "react";
 import { Text, Box } from "ink";
 import Input from "../Input/Input.js";
 import { useFormInput } from "../Input/useFormInput.js";
+import { HEX_MAP } from "../../HexMap.js";
 
-const commands = {
-    bro: () => {
-        console.log("bro command");
-    },
-
-    dude: () => {
-        console.log("dude command");
-    },
+type Props = {
+    commands: Commands;
 };
 
-export default function Command(): React.ReactNode {
+export type Commands = { [commandName: string]: () => unknown };
+
+export default function Command({ commands }: Props): React.ReactNode {
     const text = useFormInput({
         enter: { input: ":" },
         exit: [{ key: "esc" }, { key: "return" }],
     });
 
-    function onSubmit() {
+    function onSubmit(stdin: string) {
+        if (stdin === HEX_MAP.esc) {
+            return text.clearText();
+        }
+
         if (commands[text.str]) {
             commands[text.str]();
         } else {

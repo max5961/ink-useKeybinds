@@ -95,17 +95,17 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         priority: state.insert ? "textinput" : "default",
     });
 
-    onCmd(ENTER_ID as Command<typeof normalKb>, () => {
+    onCmd(ENTER_ID as Command<typeof normalKb>, (stdin: string) => {
         setState({ ...state, insert: true });
         if (!state.insert) {
-            emitter.emit("enter");
+            emitter.emit("enter", stdin);
         }
     });
 
-    onCmd(EXIT_ID as Command<typeof insertKb>, () => {
+    onCmd(EXIT_ID as Command<typeof insertKb>, (stdin: string) => {
         setState({ ...state, insert: false, idx: state.str.length });
         if (state.insert) {
-            emitter.emit("submit");
+            emitter.emit("submit", stdin);
         }
     });
 
