@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Box, Text, useApp } from "ink";
 import KeybindProcessingGate from "../KeybindProcessingGate.js";
 import KbState from "../Components/KbState/KbState.js";
-import useKeybinds, { KbConfig } from "../useKeybinds.js";
 import Input from "../Components/Input/Input.js";
-import Keybinds, { useOnCmd } from "../Keybinds.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
+import { KbConfig } from "../useKeybinds.js";
+import Keybinds, { useOnCmd } from "../Keybinds.js";
 
 const kbs = {
     bro: { input: "b" },
@@ -17,14 +17,19 @@ export default function App(): React.ReactNode {
     return (
         <>
             <KeybindProcessingGate>
-                <InputTest />
-                <KbStateView />
+                <Keybinds config={kbs}>
+                    <BroUpdater />
+                    <InputTest />
+                    <KbStateView />
+                </Keybinds>
             </KeybindProcessingGate>
         </>
     );
 }
 
+let j = 0;
 const InputTest = React.memo(function InputTest(): React.ReactNode {
+    console.log(`INPUT: ${++j}`);
     const text = useFormInput();
 
     function isValidText(str: string) {
@@ -80,7 +85,9 @@ function BroUpdater(): React.ReactNode {
     );
 }
 
+let k = 0;
 function KbStateView(): React.ReactNode {
+    console.log(`kbstate: ${++k}`);
     return (
         <>
             <KbState>

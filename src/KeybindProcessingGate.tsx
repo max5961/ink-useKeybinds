@@ -1,8 +1,10 @@
 import React, {
     createContext,
     PropsWithChildren,
+    useCallback,
     useContext,
-    useState,
+    useReducer,
+    useRef,
 } from "react";
 import assert from "assert";
 
@@ -30,74 +32,83 @@ type ProcessingGateContext = {
 export const ProcessingGateContext =
     createContext<ProcessingGateContext | null>(null);
 
-const reducer = (state: Gate, action: Action) => {
-    const copy = { ...state };
+const reducer = (gate: Gate, action: Action) => {
+    const copy = { ...gate };
     if (action.type === "UPDATE_PRIORITY") {
-        copy[action.payload.hookID] = action.payload.priority;
+        if (action.payload.priority) {
+            copy[action.payload.hookId] = action.payload.priority;
+        }
         return copy;
     }
 
-    return state;
+    if (action.type === "REMOVE_HOOK") {
+        delete copy[action.payload.hookId];
+        return copy;
+    }
+
+    throw new Error("Unhandled action type");
 };
 
 export default function KeybindProcessingGate({
     children,
 }: PropsWithChildren): React.ReactNode {
-    const [gate, setGate] = useState<{ [key: string]: Priority }>({});
+    const [gate, dispatch] = useReducer(reducer, {});
+    // const [gate, setGate] = useState<{ [key: string]: Priority }>({});
+    const gateRef = useRef<Gate>(gate);
+    gateRef.current = gate;
 
-    function canProcess(hookId: string, priority: Priority): boolean {
-        /*
-         * 'always' and 'never' don't interfere with other priority levels, but
-         * 'textinput' overrides everything including 'always'
-         * */
-        if (priority === "always") {
-            /* textinput overrides always */
+    const canProcess = useCallback(
+        (hookId: string, priority: Priority): boolean => {
+            /*
+             * 'always' and 'never' don't interfere with other priority levels, but
+             * 'textinput' overrides everything including 'always'
+             * */
+            if (priority === "always") {
+                /* textinput overrides always */
+                for (const key in gateRef.current) {
+                    if (gateRef.current[key] === "textinput") {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            if (priority === "never") {
+                return false;
+            }
+
+            /*
+             * Other priority levels can override each other
+             * */
+            const map: Record<Exclude<Priority, "never" | "always">, number> = {
+                default: 0,
+                override: 1,
+                textinput: 2,
+            } as const;
+
             for (const key in gate) {
-                if (gate[key] === "textinput") {
+                if (key === hookId) continue;
+                if (gateRef.current[key] === "always") continue;
+                if (gateRef.current[key] === "never") continue;
+
+                if (map[gateRef.current[key]] > map[priority]) {
                     return false;
                 }
             }
 
             return true;
-        }
+        },
+        [],
+    );
 
-        if (priority === "never") {
-            return false;
-        }
+    const updatePriority = useCallback((hookId: string, priority: Priority) => {
+        dispatch({ type: "UPDATE_PRIORITY", payload: { hookId, priority } });
+    }, []);
 
-        /*
-         * Other priority levels can override each other
-         * */
-        const map: Record<Exclude<Priority, "never" | "always">, number> = {
-            default: 0,
-            override: 1,
-            textinput: 2,
-        } as const;
-
-        for (const key in gate) {
-            if (key === hookId) continue;
-            if (gate[key] === "always") continue;
-            if (gate[key] === "never") continue;
-
-            if (map[gate[key]] > map[priority]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    function updatePriority(hookId: string, priority: Priority): void {
-        const gateCopy = { ...gate };
-        gateCopy[hookId] = priority;
-        setGate(gateCopy);
-    }
-
-    function removeHook(hookId: string): void {
-        const gateCopy = { ...gate };
-        delete gateCopy[hookId];
-        setGate(gateCopy);
-    }
+    const removeHook = useCallback((hookId: string) => {
+        dispatch({ type: "REMOVE_HOOK", payload: { hookId } });
+    }, []);
 
     return (
         <ProcessingGateContext.Provider
@@ -120,7 +131,7 @@ export function useKeybindPriority(): Exclude<ProcessingGateContext, null> {
 }
 
 type Action = {
-    type: "UPDATE_PRIORITY" | "CAN_PROCESS" | "REMOVE_HOOK";
-    payload: { hookID: string; priority: Priority };
+    type: "UPDATE_PRIORITY" | "REMOVE_HOOK";
+    payload: { hookId: string; priority?: Priority };
 };
 type Gate = { [HOOK_ID: string]: Priority };
