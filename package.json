@@ -1,11 +1,12 @@
 {
     "name": "@mmorrissey5961/ink-use-keybinds",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "description": "An extension of Ink's builtin useInput hook",
     "main": "dist/useKeybinds.js",
     "scripts": {
         "compile": "tsc",
-        "start": "tsc && node ./dist/root.js"
+        "start": "tsc && node ./dist/App/root.js",
+        "test": "vitest"
     },
     "keywords": [
         "ink",
@@ -17,19 +18,26 @@
     },
     "license": "MIT",
     "dependencies": {
-        "@types/react": "latest",
-        "ink": "latest",
-        "react": "latest"
+        "chalk": "^5.3.0",
+        "ink": "^5.0.1",
+        "react": "^18.3.1",
+        "shallow-equal": "^3.1.0"
     },
     "devDependencies": {
-        "@babel/preset-env": "latest",
-        "@babel/preset-typescript": "latest",
-        "@types/node": "latest",
-        "prettier": "latest",
-        "typescript": "latest"
+        "@types/react": "^18.3.5",
+        "@types/jest": "^29.5.12",
+        "@types/node": "^22.5.3",
+        "prettier": "^3.3.3",
+        "react-devtools-core": "^5.3.1",
+        "sinon": "^18.0.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.5.4",
+        "vitest": "^2.0.5",
+        "why-is-node-running": "^3.2.0"
     },
     "type": "module",
     "files": [
-        "dist/*"
+        "dist/useKeybinds.js"
     ]
 }
+
