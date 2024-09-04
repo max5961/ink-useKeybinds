@@ -1,10 +1,6 @@
 import { useState } from "react";
-import useKeybinds, {
-    Binding,
-    Command,
-    KbConfig,
-} from "../keybinds/useKeybinds.js";
-import { HEX_MAP, Key } from "../keybinds/HexMap.js";
+import useKeybinds, { Binding, Command, KbConfig } from "../../useKeybinds.js";
+import { HEX_MAP, Key } from "../../HexMap.js";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
 

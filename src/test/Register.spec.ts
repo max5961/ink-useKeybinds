@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import Register from "../keybinds/Register.js";
-import { KbConfig } from "../keybinds/useKeybinds.js";
-import { HEX_MAP } from "../keybinds/HexMap.js";
+import Register from "../Register.js";
+import { KbConfig } from "../useKeybinds.js";
+import { HEX_MAP } from "../HexMap.js";
 
 const ctrl_plus_letters = {
     ctrlA: { key: "ctrl", input: "a" },

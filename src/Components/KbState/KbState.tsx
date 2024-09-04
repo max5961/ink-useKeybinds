@@ -1,5 +1,5 @@
 import React, { useContext, createContext, PropsWithChildren } from "react";
-import useKeybinds from "../keybinds/useKeybinds.js";
+import useKeybinds from "../../useKeybinds.js";
 import assert from "assert";
 import { Text } from "ink";
 

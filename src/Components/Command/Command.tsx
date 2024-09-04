@@ -1,9 +1,7 @@
 import React from "react";
 import { Text, Box } from "ink";
-import useKeybinds, { KbConfig } from "../keybinds/useKeybinds.js";
 import Input from "../Input/Input.js";
 import { useFormInput } from "../Input/useFormInput.js";
-import chalk from "chalk";
 
 const commands = {
     bro: () => {

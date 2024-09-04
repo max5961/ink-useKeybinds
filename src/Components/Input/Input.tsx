@@ -1,7 +1,7 @@
 import React from "react";
 import { Text } from "ink";
-import { InputState, UseFormReturn } from "./useFormInput.js";
-import { Props } from "../../node_modules/ink/build/components/Text.js";
+import { UseFormReturn } from "./useFormInput.js";
+import { Props } from "../../../node_modules/ink/build/components/Text.js";
 import chalk from "chalk";
 
 type Color = Exclude<Props["color"], undefined>;

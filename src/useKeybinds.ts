@@ -6,29 +6,59 @@ import { randomUUID } from "crypto";
 import { ProcessingGateContext, Priority } from "./KeybindProcessingGate.js";
 import assert from "assert";
 
+type Opts = {
+    /*
+     * Defaults to false. returns { register: string; command: string }
+     * 'register' stores the last 1-2 alphanumeric key presses and is wiped out
+     * when a command is matched
+     * 'command' is the last command to have been matched
+     * */
+    trackState?: boolean;
+
+    /*
+     * Defaults to "default"
+     * "never" | "default" | "override" | "always" | "textinput"
+     * Determines if the configuration will be processed on keypress events
+     * based on priorities of other instances of this hook elsewhere in the app.
+     * default and override don't effect always, but textinput overrides all
+     * priorities including always
+     * */
+    priority?: Priority;
+};
+
+type Return<T extends KbConfig> = KbData<T> & {
+    onCmd: OnCmd<T>;
+    onCmdGenerator: OnCmdGenerator<T>;
+};
+
 export default function useKeybinds<T extends KbConfig = any>(
     kbConfig: T,
-    opts?: UseKbOpts,
-): KbData<T> & { onCmd: OnCmd<T> } {
+    opts?: Opts,
+): Return<T> {
     opts = { trackState: false, priority: "default", ...opts };
 
     const ProcessingGate = useContext(ProcessingGateContext);
-    assert(ProcessingGate);
+    assert(
+        ProcessingGate,
+        "useKeybinds must be used within ProcessingGateContext",
+    );
 
+    const PRIORITY = opts.priority || "default";
     const [ID] = useState(randomUUID());
+    const [HOOK_EMITTER] = useState(new EventEmitter());
+
     const [data, setData] = useState<KbData<T>>({
         register: "",
         command: "",
     });
 
     /*
-     * Begin listening to stdin if not already
+     * If not already listening to the stdin stream, start listening
      * */
-    if (opts.priority && opts.priority !== "never") {
+    if (PRIORITY !== "never") {
         Register.listen();
     }
 
-    const commandEmitter = useRef<EventEmitter>(new EventEmitter());
     const canProcess = ProcessingGate.canProcess(
         ID,
         opts.priority || "default",
@@ -55,15 +85,15 @@ export default function useKeybinds<T extends KbConfig = any>(
     }, [canProcess]);
 
     useEffect(() => {
-        ProcessingGate.updatePriority(ID, opts.priority || "default");
+        ProcessingGate.updatePriority(ID, PRIORITY);
     }, [opts.priority]);
 
     useEffect(() => {
-        ProcessingGate.updatePriority(ID, opts.priority || "default");
+        ProcessingGate.updatePriority(ID, PRIORITY);
 
         return () => {
             unsubscribe.current();
-            commandEmitter.current.removeAllListeners();
+            HOOK_EMITTER.removeAllListeners();
             ProcessingGate.removeHook(ID);
         };
     }, []);
@@ -82,52 +112,59 @@ export default function useKeybinds<T extends KbConfig = any>(
         }
 
         if (command) {
-            commandEmitter.current.emit(command, stdin);
+            HOOK_EMITTER.emit(command, stdin);
         }
     }
 
-    commandEmitter.current.removeAllListeners();
+    HOOK_EMITTER.removeAllListeners();
 
     function onCmd<T extends KbConfig>(
         cmd: WONums<T>,
         handler: (stdin: string) => void,
     ): any {
-        // if (ProcessingGate && ProcessingGate.canProcess(ID, opts!.priority!)) {
-        //     commandEmitter.current.on(cmd, handler);
-        // }
-
         if (canProcess) {
-            commandEmitter.current.on(cmd, handler);
+            HOOK_EMITTER.on(cmd, handler);
         }
     }
 
-    return { onCmd, ...data };
+    /* For use within the Keybinds context component so that each component
+     * that uses the context is separate from one another and allows to
+     * unsubscribe and resubscribe on every re-render so that there aren't
+     * multiple responders to an event */
+    function onCmdGenerator<T extends KbConfig>(
+        unsubscriberList: any,
+    ): OnCmd<T> {
+        return function onCmd(
+            cmd: WONums<T>,
+            handler: (stdin: string) => unknown,
+        ): void {
+            if (canProcess) {
+                HOOK_EMITTER.on(cmd, handler);
+            }
+            unsubscriberList.push(() => {
+                HOOK_EMITTER.removeListener(cmd, handler);
+            });
+        };
+    }
+
+    return {
+        onCmd,
+        onCmdGenerator,
+        ...data,
+    };
 }
 
 export type KbConfig = {
     [key: string]: Binding[] | Binding;
 };
 
+export type Command<T extends Readonly<KbConfig>> = keyof T;
+
 export type Binding = {
     key?: Key;
     notKey?: Key[];
     input?: string;
     notInput?: string[];
-};
-
-export type UseKbOpts = {
-    /*
-     * Defaults to false. returns { register: string; command: string }
-     * 'register' stores the last 1-2 alphanumeric key presses and is wiped out
-     * when a command is matched
-     * 'command' is the last command to have been matched
-     * */
-    trackState?: boolean;
-
-    /*
-     * todo
-     * */
-    priority?: Priority;
 };
 
 export type KbData<T extends KbConfig> = {
@@ -139,7 +176,9 @@ export interface OnCmd<T extends KbConfig> {
     (cmd: WONums<T>, handler: (stdin: string) => unknown): void;
 }
 
-export type Command<T extends Readonly<KbConfig>> = keyof T;
+export interface OnCmdGenerator<T extends KbConfig> {
+    (unsubscriberList: (() => void)[]): OnCmd<T>;
+}
 
 /* union type of the keys of an object but excludes possible number types that
  * aren't compatible with types that expect strings */

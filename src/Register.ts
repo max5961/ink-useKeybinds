@@ -1,6 +1,6 @@
 import EventEmitter from "events";
 import { Binding, KbConfig } from "./useKeybinds.js";
-import { HEX_MAP, Key, newKeyRegister, NonAlphaKeys } from "./HexMap.js";
+import { HEX_MAP, newKeyRegister, NonAlphaKeys } from "./HexMap.js";
 
 /*
  * This module is the single source of truth for all keypress data.  On every
@@ -77,7 +77,7 @@ function subscribe(
          * could cause the app to exit if you replaced the entire component that
          * contained the hook with a loading screen while waiting on a task to
          * complete.  Thats not to say that this module isn't compatible with
-         * loading screens, just that no EVT.keypress subscribers will remove
+         * loading screens, just that having no EVT.keypress subscribers will remove
          * all listeners set by this module which will cause the application to
          * exit
          * */
@@ -274,7 +274,6 @@ function handleKeypress(stdin: string): void {
     /* Ctrl + lowercase letter.  Unfortunately, I don't believe there is any way
      * within Nodejs to recognize other combinations of special keys. */
     const charCode = stdin.charCodeAt(0);
-    // console.log(charCode);
     if (charCode >= 1 && charCode <= 26) {
         const letter = String.fromCharCode(charCode + 96);
         state.ctrlKeys = letter;
@@ -355,7 +354,7 @@ const Register = {
     getCommand,
     getCharRegister,
 
-    // PRIVATE
+    // For testing
     handleKeypress,
 };
 

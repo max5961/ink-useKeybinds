@@ -10,8 +10,8 @@ import assert from "assert";
  * Sets priority levels for useKeybinds hooks so that control can be passed
  * between different hook instances.  This allows you to keep a global keybind
  * configuration while not interrupting operations such as filling out form
- * fields.  Or maybe you want to enter a different mode temporarily for
- * something like 'press any key to continue'
+ * fields. Or maybe you want to temporarily override your normal settings to fill
+ * out a form such as press any key to continue
  * */
 
 export type Priority =
@@ -30,11 +30,19 @@ type ProcessingGateContext = {
 export const ProcessingGateContext =
     createContext<ProcessingGateContext | null>(null);
 
-let i = 0;
+const reducer = (state: Gate, action: Action) => {
+    const copy = { ...state };
+    if (action.type === "UPDATE_PRIORITY") {
+        copy[action.payload.hookID] = action.payload.priority;
+        return copy;
+    }
+
+    return state;
+};
+
 export default function KeybindProcessingGate({
     children,
 }: PropsWithChildren): React.ReactNode {
-    // console.log(`Processing gate: ${++i}`);
     const [gate, setGate] = useState<{ [key: string]: Priority }>({});
 
     function canProcess(hookId: string, priority: Priority): boolean {
@@ -110,3 +118,9 @@ export function useKeybindPriority(): Exclude<ProcessingGateContext, null> {
 
     return priorityContext;
 }
+
+type Action = {
+    type: "UPDATE_PRIORITY" | "CAN_PROCESS" | "REMOVE_HOOK";
+    payload: { hookID: string; priority: Priority };
+};
+type Gate = { [HOOK_ID: string]: Priority };

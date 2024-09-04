@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { Box, Text, useApp } from "ink";
-import KeybindProcessingGate from "./keybinds/KeybindProcessingGate.js";
-import KbState from "./KbState/KbState.js";
-import Keybinds, { useOnCmd } from "./Keybinds/Keybinds.js";
-import useKeybinds, { KbConfig } from "./keybinds/useKeybinds.js";
-import Command from "./Command/Command.js";
-import Input from "./Input/Input.js";
-import { useFormInput } from "./Input/useFormInput.js";
+import KeybindProcessingGate from "../KeybindProcessingGate.js";
+import KbState from "../Components/KbState/KbState.js";
+import useKeybinds, { KbConfig } from "../useKeybinds.js";
+import Input from "../Components/Input/Input.js";
+import Keybinds, { useOnCmd } from "../Keybinds.js";
+import { useFormInput } from "../Components/Input/useFormInput.js";
 
 const kbs = {
     bro: { input: "b" },
@@ -18,16 +17,14 @@ export default function App(): React.ReactNode {
     return (
         <>
             <KeybindProcessingGate>
-                <BroUpdater />
-                <KbStateView />
                 <InputTest />
-                <Command />
+                <KbStateView />
             </KeybindProcessingGate>
         </>
     );
 }
 
-function InputTest(): React.ReactNode {
+const InputTest = React.memo(function InputTest(): React.ReactNode {
     const text = useFormInput();
 
     function isValidText(str: string) {
@@ -50,16 +47,16 @@ function InputTest(): React.ReactNode {
             <Input text={text} onSubmit={onSubmit} mask={false} />
         </Box>
     );
-}
+});
 
 let i = 0;
 function BroUpdater(): React.ReactNode {
-    // console.log(`BroUpdater: ${++i}`);
+    console.log(`BroUpdater: ${++i}`);
 
     const [bro, setBro] = useState("bro");
     const { exit } = useApp();
 
-    const { onCmd } = useKeybinds<typeof kbs>(kbs);
+    const onCmd = useOnCmd<typeof kbs>();
 
     onCmd("bro", () => {
         setBro("bro");
