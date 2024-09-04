@@ -3,7 +3,11 @@ import Register, { EVT } from "./Register.js";
 import { Key } from "./HexMap.js";
 import { EventEmitter } from "events";
 import { randomUUID } from "crypto";
-import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
+import KeybindProcessingGate, {
+    Priority,
+    useKeybindPriority,
+} from "./KeybindProcessingGate.js";
+import Keybinds, { useOnCmd } from "./Keybinds.js";
 
 type Opts = {
     /*
@@ -30,7 +34,7 @@ type Return<T extends KbConfig> = KbData<T> & {
     onCmdGenerator: OnCmdGenerator<T>;
 };
 
-export default function useKeybinds<T extends KbConfig = any>(
+export function useKeybinds<T extends KbConfig = any>(
     kbConfig: T,
     opts?: Opts,
 ): Return<T> {
@@ -179,3 +183,10 @@ export type WONums<T extends object> = T extends object
         ? keyof T
         : never
     : never;
+
+export default {
+    useKeybinds,
+    Keybinds,
+    KeybindProcessingGate,
+    useOnCmd,
+};

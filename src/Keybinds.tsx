@@ -4,7 +4,7 @@ import React, {
     useContext,
     useRef,
 } from "react";
-import useKeybinds, { OnCmd, OnCmdGenerator, KbConfig } from "./useKeybinds.js";
+import { useKeybinds, OnCmd, OnCmdGenerator, KbConfig } from "./useKeybinds.js";
 import assert from "assert";
 
 type KeybindsContext<T extends KbConfig = any> = {
