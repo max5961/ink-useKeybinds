@@ -53,7 +53,6 @@ export default function KeybindProcessingGate({
     children,
 }: PropsWithChildren): React.ReactNode {
     const [gate, dispatch] = useReducer(reducer, {});
-    // const [gate, setGate] = useState<{ [key: string]: Priority }>({});
     const gateRef = useRef<Gate>(gate);
     gateRef.current = gate;
 
@@ -87,7 +86,7 @@ export default function KeybindProcessingGate({
                 textinput: 2,
             } as const;
 
-            for (const key in gate) {
+            for (const key in gateRef.current) {
                 if (key === hookId) continue;
                 if (gateRef.current[key] === "always") continue;
                 if (gateRef.current[key] === "never") continue;

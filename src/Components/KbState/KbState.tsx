@@ -10,6 +10,7 @@ type KbStateContext = {
 
 const KbStateContext = createContext<KbStateContext | null>(null);
 
+let i = 0;
 export default function KbState({
     children,
 }: PropsWithChildren): React.ReactNode {

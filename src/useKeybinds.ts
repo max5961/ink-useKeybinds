@@ -3,8 +3,7 @@ import Register, { EVT } from "./Register.js";
 import { Key } from "./HexMap.js";
 import { EventEmitter } from "events";
 import { randomUUID } from "crypto";
-import { ProcessingGateContext, Priority } from "./KeybindProcessingGate.js";
-import assert from "assert";
+import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
 
 type Opts = {
     /*
@@ -37,11 +36,7 @@ export default function useKeybinds<T extends KbConfig = any>(
 ): Return<T> {
     opts = { trackState: false, priority: "default", ...opts };
 
-    const ProcessingGate = useContext(ProcessingGateContext);
-    assert(
-        ProcessingGate,
-        "useKeybinds must be used within ProcessingGateContext",
-    );
+    const ProcessingGate = useKeybindPriority();
 
     const PRIORITY = opts.priority || "default";
     const [ID] = useState(randomUUID());
@@ -59,10 +54,7 @@ export default function useKeybinds<T extends KbConfig = any>(
         Register.listen();
     }
 
-    const canProcess = ProcessingGate.canProcess(
-        ID,
-        opts.priority || "default",
-    );
+    const canProcess = ProcessingGate.canProcess(ID, PRIORITY);
 
     /*
      * Unsubscribe and resubscribe to keypress events so that we don't end up

@@ -54,9 +54,9 @@ const InputTest = React.memo(function InputTest(): React.ReactNode {
     );
 });
 
-let i = 0;
+// let i = 0;
 function BroUpdater(): React.ReactNode {
-    console.log(`BroUpdater: ${++i}`);
+    // console.log(`BroUpdater: ${++i}`);
 
     const [bro, setBro] = useState("bro");
     const { exit } = useApp();
@@ -85,9 +85,9 @@ function BroUpdater(): React.ReactNode {
     );
 }
 
-let k = 0;
+// let k = 0;
 function KbStateView(): React.ReactNode {
-    console.log(`kbstate: ${++k}`);
+    // console.log(`kbstate: ${++k}`);
     return (
         <>
             <KbState>

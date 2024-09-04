@@ -53,20 +53,16 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         { key: "esc" },
     ];
 
+    /*
+     * Get normal keybindings
+     * */
     const ENTER_ID = `ENTER_${ID}`;
     const normalKb = {} satisfies KbConfig;
     normalKb[ENTER_ID] = ENTER;
 
-    const normal = useKeybinds(normalKb, {
-        priority: state.insert ? "never" : "default",
-    });
-    normal.onCmd(ENTER_ID as Command<typeof normalKb>, () => {
-        setState({ ...state, insert: true });
-        if (!state.insert) {
-            emitter.emit("enter");
-        }
-    });
-
+    /*
+     * Get insert keybindings
+     * */
     const notKey: Key[] = [];
     const notInput: string[] = [];
     for (const b of [...(Array.isArray(EXIT) ? EXIT : [EXIT])]) {
@@ -94,30 +90,38 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     } satisfies KbConfig;
     insertKb[EXIT_ID] = EXIT;
 
-    const insert = useKeybinds(insertKb, {
-        priority: state.insert ? "textinput" : "never",
+    const config = state.insert ? insertKb : normalKb;
+    const { onCmd } = useKeybinds<typeof insertKb | typeof normalKb>(config, {
+        priority: state.insert ? "textinput" : "default",
     });
 
-    insert.onCmd(EXIT_ID as Command<typeof insertKb>, () => {
+    onCmd(ENTER_ID as Command<typeof normalKb>, () => {
+        setState({ ...state, insert: true });
+        if (!state.insert) {
+            emitter.emit("enter");
+        }
+    });
+
+    onCmd(EXIT_ID as Command<typeof insertKb>, () => {
         setState({ ...state, insert: false, idx: state.str.length });
         if (state.insert) {
             emitter.emit("submit");
         }
     });
 
-    insert.onCmd("left", () => {
+    onCmd("left", () => {
         if (state.insert && state.idx > 0) {
             setState({ ...state, idx: state.idx - 1 });
         }
     });
 
-    insert.onCmd("right", () => {
+    onCmd("right", () => {
         if (state.insert && state.idx < state.str.length) {
             setState({ ...state, idx: state.idx + 1 });
         }
     });
 
-    insert.onCmd("tab", () => {
+    onCmd("tab", () => {
         if (!state.insert) return;
 
         const nextStr = `${state.str}    `;
@@ -125,7 +129,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         setState({ ...state, idx: state.idx + 4, str: nextStr });
     });
 
-    insert.onCmd("backspace", () => {
+    onCmd("backspace", () => {
         if (!state.insert) return;
         const { str, idx } = state;
 
@@ -135,7 +139,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         setState({ ...state, str: nextStr, idx: nextIdx });
     });
 
-    insert.onCmd("keypress", (char: string) => {
+    onCmd("keypress", (char: string) => {
         const invalidChars = [HEX_MAP.esc, HEX_MAP.insert, HEX_MAP.return];
         for (const invalidChar of invalidChars) {
             if (invalidChar === char) {
