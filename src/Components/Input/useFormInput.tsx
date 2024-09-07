@@ -1,6 +1,11 @@
 import { useState } from "react";
-import { useKeybinds, Binding, Command, KbConfig } from "../../useKeybinds.js";
-import { HEX_MAP, Key } from "../../HexMap.js";
+import {
+    useKeybinds,
+    Binding,
+    KeyBindEvent,
+    KeyBinds,
+} from "src/use-keybinds/useKeybinds.js";
+import { HEX_MAP, Key } from "src/use-keybinds/HexMap.js";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
 
@@ -14,7 +19,7 @@ const kb = {
         notKey: ["return", "left", "right", "up", "down", "backspace", "tab"],
         notInput: [],
     },
-} satisfies KbConfig;
+} satisfies KeyBinds;
 
 export type InputState = {
     str: string;
@@ -57,7 +62,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
      * Get normal keybindings
      * */
     const ENTER_ID = `ENTER_${ID}`;
-    const normalKb = {} satisfies KbConfig;
+    const normalKb = {} satisfies KeyBinds;
     normalKb[ENTER_ID] = ENTER;
 
     /*
@@ -87,41 +92,41 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     const insertKb = {
         ...kb,
         keypress: { notKey, notInput },
-    } satisfies KbConfig;
+    } satisfies KeyBinds;
     insertKb[EXIT_ID] = EXIT;
 
     const config = state.insert ? insertKb : normalKb;
-    const { onCmd } = useKeybinds<typeof insertKb | typeof normalKb>(config, {
+    const { onEvent } = useKeybinds<typeof insertKb | typeof normalKb>(config, {
         priority: state.insert ? "textinput" : "default",
     });
 
-    onCmd(ENTER_ID as Command<typeof normalKb>, (stdin: string) => {
+    onEvent(ENTER_ID as KeyBindEvent<typeof normalKb>, (stdin: string) => {
         setState({ ...state, insert: true });
         if (!state.insert) {
             emitter.emit("enter", stdin);
         }
     });
 
-    onCmd(EXIT_ID as Command<typeof insertKb>, (stdin: string) => {
+    onEvent(EXIT_ID as KeyBindEvent<typeof insertKb>, (stdin: string) => {
         setState({ ...state, insert: false, idx: state.str.length });
         if (state.insert) {
             emitter.emit("submit", stdin);
         }
     });
 
-    onCmd("left", () => {
+    onEvent("left", () => {
         if (state.insert && state.idx > 0) {
             setState({ ...state, idx: state.idx - 1 });
         }
     });
 
-    onCmd("right", () => {
+    onEvent("right", () => {
         if (state.insert && state.idx < state.str.length) {
             setState({ ...state, idx: state.idx + 1 });
         }
     });
 
-    onCmd("tab", () => {
+    onEvent("tab", () => {
         if (!state.insert) return;
 
         const nextStr = `${state.str}    `;
@@ -129,7 +134,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         setState({ ...state, idx: state.idx + 4, str: nextStr });
     });
 
-    onCmd("backspace", () => {
+    onEvent("backspace", () => {
         if (!state.insert) return;
         const { str, idx } = state;
 
@@ -139,7 +144,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         setState({ ...state, str: nextStr, idx: nextIdx });
     });
 
-    onCmd("keypress", (char: string) => {
+    onEvent("keypress", (char: string) => {
         const invalidChars = [HEX_MAP.esc, HEX_MAP.insert, HEX_MAP.return];
         for (const invalidChar of invalidChars) {
             if (invalidChar === char) {
@@ -175,7 +180,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     return { ...state, emitter, clearText, setText };
 }
 
-// insert.onCmd("returnKey", () => {
+// insert.onEvent("returnKey", () => {
 //     if (!state.insert) return;
 //
 //     if (state.str.match(/\n {4}[\w\s]+$/gm)) {

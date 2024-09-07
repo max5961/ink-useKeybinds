@@ -32,6 +32,11 @@ type ProcessingGateContext = {
 export const ProcessingGateContext =
     createContext<ProcessingGateContext | null>(null);
 
+/*
+ * For performance considerations, since everytime a priority changes new functions
+ * would be passed down through context, this allows you to memoize these functions
+ * as well as memoize the components relying on them
+ * */
 const reducer = (gate: Gate, action: Action) => {
     const copy = { ...gate };
     if (action.type === "UPDATE_PRIORITY") {
@@ -49,7 +54,7 @@ const reducer = (gate: Gate, action: Action) => {
     throw new Error("Unhandled action type");
 };
 
-export default function KeybindProcessingGate({
+export function KeybindProcessingGate({
     children,
 }: PropsWithChildren): React.ReactNode {
     const [gate, dispatch] = useReducer(reducer, {});

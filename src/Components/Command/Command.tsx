@@ -1,8 +1,8 @@
 import React from "react";
 import { Text, Box } from "ink";
-import Input from "../Input/Input.js";
+import { Input } from "../Input/Input.js";
 import { useFormInput } from "../Input/useFormInput.js";
-import { HEX_MAP } from "../../HexMap.js";
+import { HEX_MAP } from "src/use-keybinds/HexMap.js";
 
 type Props = {
     commands: Commands;
@@ -10,7 +10,7 @@ type Props = {
 
 export type Commands = { [commandName: string]: () => unknown };
 
-export default function Command({ commands }: Props): React.ReactNode {
+export function Command({ commands }: Props): React.ReactNode {
     const text = useFormInput({
         enter: { input: ":" },
         exit: [{ key: "esc" }, { key: "return" }],

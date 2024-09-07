@@ -1,5 +1,5 @@
 import EventEmitter from "events";
-import { Binding, KbConfig } from "./useKeybinds.js";
+import { Binding, KeyBinds } from "./useKeybinds.js";
 import { HEX_MAP, newKeyRegister, NonAlphaKeys } from "./HexMap.js";
 
 /*
@@ -139,7 +139,7 @@ function replaceKeyRegister(mapping: NonAlphaKeys): void {
  * PUBLIC
  * Allows useKeybinds hooks to process their configurations
  * */
-function processConfig(config: KbConfig): void {
+function processConfig(config: KeyBinds): void {
     /* Is there a non alphanumeric keypress?  We need to know so that bindings
      * such as just "f" should not trigger ctrl + f for example. */
     const hasNonAlphaKey = Object.values(state.keys).some((b) => b);

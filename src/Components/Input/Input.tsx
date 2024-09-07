@@ -16,7 +16,7 @@ type InputProps = {
     cursorColor?: Color;
 };
 
-export default function Input({
+export function Input({
     text,
     mask,
     placeholder,

@@ -1,20 +1,16 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Register, { EVT } from "./Register.js";
 import { Key } from "./HexMap.js";
 import { EventEmitter } from "events";
 import { randomUUID } from "crypto";
-import KeybindProcessingGate, {
-    Priority,
-    useKeybindPriority,
-} from "./KeybindProcessingGate.js";
-import Keybinds, { useOnCmd } from "./Keybinds.js";
+import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
 
 type Opts = {
     /*
-     * Defaults to false. returns { register: string; command: string }
+     * Defaults to false. returns { register: string; event: string }
      * 'register' stores the last 1-2 alphanumeric key presses and is wiped out
-     * when a command is matched
-     * 'command' is the last command to have been matched
+     * when a event is matched
+     * 'event' is the last event to have been matched
      * */
     trackState?: boolean;
 
@@ -29,12 +25,12 @@ type Opts = {
     priority?: Priority;
 };
 
-type Return<T extends KbConfig> = KbData<T> & {
-    onCmd: OnCmd<T>;
-    onCmdGenerator: OnCmdGenerator<T>;
+type Return<T extends KeyBinds> = StdinData<T> & {
+    onEvent: OnEvent<T>;
+    onEventGenerator: OnEventGenerator<T>;
 };
 
-export function useKeybinds<T extends KbConfig = any>(
+export function useKeybinds<T extends KeyBinds = any>(
     kbConfig: T,
     opts?: Opts,
 ): Return<T> {
@@ -46,9 +42,9 @@ export function useKeybinds<T extends KbConfig = any>(
     const [ID] = useState(randomUUID());
     const [HOOK_EMITTER] = useState(new EventEmitter());
 
-    const [data, setData] = useState<KbData<T>>({
+    const [data, setData] = useState<StdinData<T>>({
         register: "",
-        command: "",
+        event: "",
     });
 
     /*
@@ -76,7 +72,7 @@ export function useKeybinds<T extends KbConfig = any>(
         }
 
         if (opts.trackState) {
-            setData({ command: "", register: "" });
+            setData({ event: "", register: "" });
         }
     }, [canProcess]);
 
@@ -98,23 +94,23 @@ export function useKeybinds<T extends KbConfig = any>(
         Register.processConfig(kbConfig);
 
         const register = Register.getCharRegister();
-        const command = Register.getCommand();
+        const event = Register.getCommand();
 
         if (opts?.trackState) {
             setData({
                 register,
-                command: command || "",
+                event: event || "",
             });
         }
 
-        if (command) {
-            HOOK_EMITTER.emit(command, stdin);
+        if (event) {
+            HOOK_EMITTER.emit(event, stdin);
         }
     }
 
     HOOK_EMITTER.removeAllListeners();
 
-    function onCmd<T extends KbConfig>(
+    function onEvent<T extends KeyBinds>(
         cmd: WONums<T>,
         handler: (stdin: string) => void,
     ): any {
@@ -127,10 +123,10 @@ export function useKeybinds<T extends KbConfig = any>(
      * that uses the context is separate from one another and allows to
      * unsubscribe and resubscribe on every re-render so that there aren't
      * multiple responders to an event */
-    function onCmdGenerator<T extends KbConfig>(
+    function onEventGenerator<T extends KeyBinds>(
         unsubscriberList: any,
-    ): OnCmd<T> {
-        return function onCmd(
+    ): OnEvent<T> {
+        return function onEvent(
             cmd: WONums<T>,
             handler: (stdin: string) => unknown,
         ): void {
@@ -144,17 +140,17 @@ export function useKeybinds<T extends KbConfig = any>(
     }
 
     return {
-        onCmd,
-        onCmdGenerator,
+        onEvent,
+        onEventGenerator,
         ...data,
     };
 }
 
-export type KbConfig = {
+export type KeyBinds = {
     [key: string]: Binding[] | Binding;
 };
 
-export type Command<T extends Readonly<KbConfig>> = keyof T;
+export type KeyBindEvent<T extends Readonly<KeyBinds>> = keyof T;
 
 export type Binding = {
     key?: Key;
@@ -163,17 +159,17 @@ export type Binding = {
     notInput?: string[];
 };
 
-export type KbData<T extends KbConfig> = {
+export type StdinData<T extends KeyBinds> = {
     register: string;
-    command: Command<T> | "";
+    event: KeyBindEvent<T> | "";
 };
 
-export interface OnCmd<T extends KbConfig> {
+export interface OnEvent<T extends KeyBinds> {
     (cmd: WONums<T>, handler: (stdin: string) => unknown): void;
 }
 
-export interface OnCmdGenerator<T extends KbConfig> {
-    (unsubscriberList: (() => void)[]): OnCmd<T>;
+export interface OnEventGenerator<T extends KeyBinds> {
+    (unsubscriberList: (() => void)[]): OnEvent<T>;
 }
 
 /* union type of the keys of an object but excludes possible number types that
@@ -183,10 +179,3 @@ export type WONums<T extends object> = T extends object
         ? keyof T
         : never
     : never;
-
-export default {
-    useKeybinds,
-    Keybinds,
-    KeybindProcessingGate,
-    useOnCmd,
-};

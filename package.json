@@ -1,8 +1,11 @@
 {
     "name": "@mmorrissey5961/ink-use-keybinds",
-    "version": "1.0.5",
+    "version": "1.1.5",
     "description": "An extension of Ink's builtin useInput hook",
-    "main": "dist/useKeybinds.js",
+    "main": "dist/index.js",
+    "module": "ES6",
+    "target": "ES6",
+    "moduleResolution": "node",
     "scripts": {
         "compile": "tsc",
         "start": "tsc && node ./dist/App/root.js",
@@ -19,14 +22,15 @@
     "license": "MIT",
     "dependencies": {
         "chalk": "^5.3.0",
+        "immer": "^10.1.1",
         "ink": "^5.0.1",
         "react": "^18.3.1",
         "shallow-equal": "^3.1.0"
     },
     "devDependencies": {
-        "@types/react": "^18.3.5",
         "@types/jest": "^29.5.12",
         "@types/node": "^22.5.3",
+        "@types/react": "^18.3.5",
         "prettier": "^3.3.3",
         "react-devtools-core": "^5.3.1",
         "sinon": "^18.0.0",
@@ -37,7 +41,6 @@
     },
     "type": "module",
     "files": [
-        "dist/useKeybinds.js"
+        "dist/*"
     ]
 }
-

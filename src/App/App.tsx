@@ -1,18 +1,20 @@
 import React, { useState } from "react";
 import { Box, Text, useApp } from "ink";
-import KeybindProcessingGate from "../KeybindProcessingGate.js";
-import KbState from "../Components/KbState/KbState.js";
-import Input from "../Components/Input/Input.js";
+import { StdinState } from "../Components/StdinState/StdinState.js";
+import { Input } from "../Components/Input/Input.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
-import { KbConfig } from "../useKeybinds.js";
-import Keybinds, { useOnCmd } from "../Keybinds.js";
-import Command, { Commands } from "../Components/Command/Command.js";
+import { KeyBinds } from "src/use-keybinds/useKeybinds.js";
+import {
+    KeybindsProvider,
+    useOnEvent,
+} from "src/use-keybinds/KeybindsProvider.js";
+import { Command, Commands } from "../Components/Command/Command.js";
 
 const kbs = {
     foo: { input: "b" },
     ctrlA: { key: "ctrl", input: "a" },
     quit: { input: "q" },
-} satisfies KbConfig;
+} satisfies KeyBinds;
 
 const commands: Commands = {
     foo: () => {
@@ -26,14 +28,12 @@ const commands: Commands = {
 export default function App(): React.ReactNode {
     return (
         <>
-            <KeybindProcessingGate>
-                <Keybinds config={kbs}>
-                    <FooUpdater />
-                    <InputTest />
-                    <KbStateView />
-                    <Command commands={commands} />
-                </Keybinds>
-            </KeybindProcessingGate>
+            <KeybindsProvider config={kbs}>
+                <FooUpdater />
+                <InputTest />
+                <KbStateView />
+                <Command commands={commands} />
+            </KeybindsProvider>
         </>
     );
 }
@@ -67,17 +67,17 @@ function FooUpdater(): React.ReactNode {
     const [foo, setFoo] = useState("foo");
     const { exit } = useApp();
 
-    const onCmd = useOnCmd<typeof kbs>();
+    const onEvent = useOnEvent<typeof kbs>();
 
-    onCmd("foo", () => {
+    onEvent("foo", () => {
         setFoo("foo");
     });
 
-    onCmd("ctrlA", () => {
+    onEvent("ctrlA", () => {
         setFoo("ctrl a foo");
     });
 
-    onCmd("quit", () => {
+    onEvent("quit", () => {
         exit();
     });
 
@@ -94,16 +94,16 @@ function FooUpdater(): React.ReactNode {
 function KbStateView(): React.ReactNode {
     return (
         <>
-            <KbState>
+            <StdinState>
                 <Box width="90%" display="flex" justifyContent="space-between">
                     <Text>
-                        Command: <KbState.Command />
+                        Command: <StdinState.Event />
                     </Text>
                     <Text>
-                        Register: <KbState.Register />
+                        Register: <StdinState.Register />
                     </Text>
                 </Box>
-            </KbState>
+            </StdinState>
         </>
     );
 }
