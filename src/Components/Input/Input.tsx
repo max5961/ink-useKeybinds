@@ -11,6 +11,7 @@ type InputProps = {
     mask?: boolean;
     onSubmit?: (stdin: string) => unknown;
     onEnter?: (stdin: string) => unknown;
+    onKeypress?: (stdin: string) => unknown;
     placeholder?: string;
     color?: Color;
     cursorColor?: Color;
@@ -22,14 +23,20 @@ export function Input({
     placeholder,
     onSubmit,
     onEnter,
+    onKeypress,
     color = "cyan",
     cursorColor = "blue",
 }: InputProps): React.ReactNode {
     let { str, idx, emitter } = text;
 
+    if (color === "") {
+        color = "white";
+    }
+
     emitter.removeAllListeners();
     onSubmit && emitter.on("submit", onSubmit);
     onEnter && emitter.on("enter", onEnter);
+    onKeypress && emitter.on("keypress", onKeypress);
 
     let before: string, cursor: string, after: string;
     before = cursor = after = "";
@@ -65,7 +72,8 @@ export function Input({
     if (text.insert) {
         cursor = chalk.inverse(chalk[cursorColor](cursor));
     } else {
-        cursor = chalk[color](" ");
+        // cursor = chalk[color](" ");
+        cursor = "";
     }
 
     if (after.length) {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import Register from "../Register.js";
-import { KbConfig } from "../useKeybinds.js";
-import { HEX_MAP } from "../HexMap.js";
+import { KeyBinds } from "../useKeybinds.js";
+import { KEYCODES } from "../Keycodes.js";
 
 const ctrl_plus_letters = {
     ctrlA: { key: "ctrl", input: "a" },
@@ -30,7 +30,7 @@ const ctrl_plus_letters = {
     ctrlX: { key: "ctrl", input: "x" },
     ctrlY: { key: "ctrl", input: "y" },
     ctrlZ: { key: "ctrl", input: "z" },
-} satisfies KbConfig;
+} satisfies KeyBinds;
 
 describe("ctrl + lowercase a - z", () => {
     it(`ctrl + a`, () => {
@@ -170,112 +170,112 @@ describe("ctrl + lowercase a - z", () => {
 describe("special key presses clear char register", () => {
     it("backspace", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.backspace);
+        Register.handleKeypress(KEYCODES.backspace);
         expect(Register.getCharRegister()).toBe("");
     });
     it("delete", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.delete);
+        Register.handleKeypress(KEYCODES.delete);
         expect(Register.getCharRegister()).toBe("");
     });
     it("esc", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.esc);
+        Register.handleKeypress(KEYCODES.esc);
         expect(Register.getCharRegister()).toBe("");
     });
     it("insert", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.insert);
+        Register.handleKeypress(KEYCODES.insert);
         expect(Register.getCharRegister()).toBe("");
     });
     it("return", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.return);
+        Register.handleKeypress(KEYCODES.return);
         expect(Register.getCharRegister()).toBe("");
     });
     it("tab", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.tab);
+        Register.handleKeypress(KEYCODES.tab);
         expect(Register.getCharRegister()).toBe("");
     });
     it("up", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.up);
+        Register.handleKeypress(KEYCODES.up);
         expect(Register.getCharRegister()).toBe("");
     });
     it("down", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.down);
+        Register.handleKeypress(KEYCODES.down);
         expect(Register.getCharRegister()).toBe("");
     });
     it("left", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.left);
+        Register.handleKeypress(KEYCODES.left);
         expect(Register.getCharRegister()).toBe("");
     });
     it("right", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.right);
+        Register.handleKeypress(KEYCODES.right);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f1", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f1);
+        Register.handleKeypress(KEYCODES.f1);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f2", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f2);
+        Register.handleKeypress(KEYCODES.f2);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f3", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f3);
+        Register.handleKeypress(KEYCODES.f3);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f4", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f4);
+        Register.handleKeypress(KEYCODES.f4);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f5", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f5);
+        Register.handleKeypress(KEYCODES.f5);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f6", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f6);
+        Register.handleKeypress(KEYCODES.f6);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f7", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f7);
+        Register.handleKeypress(KEYCODES.f7);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f8", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f8);
+        Register.handleKeypress(KEYCODES.f8);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f9", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f9);
+        Register.handleKeypress(KEYCODES.f9);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f10", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f10);
+        Register.handleKeypress(KEYCODES.f10);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f11", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f11);
+        Register.handleKeypress(KEYCODES.f11);
         expect(Register.getCharRegister()).toBe("");
     });
     it("f12", () => {
         Register.handleKeypress("a");
-        Register.handleKeypress(HEX_MAP.f12);
+        Register.handleKeypress(KEYCODES.f12);
         expect(Register.getCharRegister()).toBe("");
     });
 });
@@ -285,7 +285,7 @@ const foobar = {
     bar: [{ key: "ctrl", input: "b" }, { input: "bb" }, { input: "%^" }],
     baz: [{ key: "f1" }, { input: "Ba" }],
     quz: [{ input: "qQ" }, { input: "QQ" }],
-} satisfies KbConfig;
+} satisfies KeyBinds;
 
 describe("Keybinds trigger commands correctly and clear char register after", () => {
     // foo
@@ -333,7 +333,7 @@ describe("Keybinds trigger commands correctly and clear char register after", ()
 
     // baz
     it("'f1' triggers 'baz'", () => {
-        Register.handleKeypress(HEX_MAP.f1);
+        Register.handleKeypress(KEYCODES.f1);
         Register.processConfig(foobar);
         expect(Register.getCommand()).toBe("baz");
     });
@@ -369,7 +369,7 @@ describe("notKey, notInput, and empty object", () => {
     const cfg1 = {
         not_esc_or_return: { notKey: ["esc", "return"] },
         esc_or_return: [{ key: "esc" }, { key: "return" }],
-    } satisfies KbConfig;
+    } satisfies KeyBinds;
 
     it("anything but escape or return triggers command", () => {
         Register.handleKeypress("b");
@@ -378,7 +378,7 @@ describe("notKey, notInput, and empty object", () => {
     });
 
     it("esc or return triggers command", () => {
-        Register.handleKeypress(HEX_MAP.esc);
+        Register.handleKeypress(KEYCODES.esc);
         Register.processConfig(cfg1);
         expect(Register.getCommand()).toBe("esc_or_return");
     });

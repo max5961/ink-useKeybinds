@@ -1,4 +1,4 @@
-import { KeyMap } from "src/use-keybinds/useKeybinds.js";
+import { KeyBinds } from "../use-keybinds/useKeybinds.js";
 import { randomUUID } from "crypto";
 
 export type Item = {
@@ -41,7 +41,9 @@ export const keybinds = {
     scrollUp: { key: "ctrl", input: "u" },
     toggleWhichList: { input: "ll" },
     windowSize5: { input: "w5" },
-    windowSize10: { input: "w1" },
+    windowSizeMax: { input: "wm" },
     incSubCount: { input: "l" },
     decSubCount: { input: "h" },
-} satisfies KeyMap;
+    quit: { input: "q" },
+    expand: { input: "e" },
+} satisfies KeyBinds;

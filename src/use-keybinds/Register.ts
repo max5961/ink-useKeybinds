@@ -1,6 +1,6 @@
 import EventEmitter from "events";
 import { Binding, KeyBinds } from "./useKeybinds.js";
-import { HEX_MAP, newKeyRegister, NonAlphaKeys } from "./HexMap.js";
+import { KEYCODES, newKeyRegister, NonAlphaKeys } from "./Keycodes.js";
 
 /*
  * This module is the single source of truth for all keypress data.  On every
@@ -41,7 +41,7 @@ export const EVT = {
 } as const;
 
 const EMITTER = new EventEmitter();
-EMITTER.setMaxListeners(5);
+EMITTER.setMaxListeners(10);
 
 /*
  * PUBLIC
@@ -225,7 +225,7 @@ function handleKeypress(stdin: string): void {
     state.ctrlKeys = "";
 
     /* Handle sigint before all else */
-    if (stdin === HEX_MAP.sigint) {
+    if (stdin === KEYCODES.sigint) {
         EMITTER.removeAllListeners();
         process.stdin.pause();
         process.exit();
@@ -239,28 +239,28 @@ function handleKeypress(stdin: string): void {
         return stdin === code;
     };
     const map: NonAlphaKeys = {
-        backspace: match(HEX_MAP.backspace),
-        delete: match(HEX_MAP.delete),
-        esc: match(HEX_MAP.esc),
-        insert: match(HEX_MAP.insert),
-        return: match(HEX_MAP.return),
-        tab: match(HEX_MAP.tab),
-        up: match(HEX_MAP.up),
-        down: match(HEX_MAP.down),
-        right: match(HEX_MAP.right),
-        left: match(HEX_MAP.left),
-        f1: match(HEX_MAP.f1),
-        f2: match(HEX_MAP.f2),
-        f3: match(HEX_MAP.f3),
-        f4: match(HEX_MAP.f4),
-        f5: match(HEX_MAP.f5),
-        f6: match(HEX_MAP.f6),
-        f7: match(HEX_MAP.f7),
-        f8: match(HEX_MAP.f8),
-        f9: match(HEX_MAP.f9),
-        f10: match(HEX_MAP.f10),
-        f11: match(HEX_MAP.f11),
-        f12: match(HEX_MAP.f12),
+        backspace: match(KEYCODES.backspace),
+        delete: match(KEYCODES.delete),
+        esc: match(KEYCODES.esc),
+        insert: match(KEYCODES.insert),
+        return: match(KEYCODES.return),
+        tab: match(KEYCODES.tab),
+        up: match(KEYCODES.up),
+        down: match(KEYCODES.down),
+        right: match(KEYCODES.right),
+        left: match(KEYCODES.left),
+        f1: match(KEYCODES.f1),
+        f2: match(KEYCODES.f2),
+        f3: match(KEYCODES.f3),
+        f4: match(KEYCODES.f4),
+        f5: match(KEYCODES.f5),
+        f6: match(KEYCODES.f6),
+        f7: match(KEYCODES.f7),
+        f8: match(KEYCODES.f8),
+        f9: match(KEYCODES.f9),
+        f10: match(KEYCODES.f10),
+        f11: match(KEYCODES.f11),
+        f12: match(KEYCODES.f12),
 
         /* ctrl will not be triggered on its own.  It can only read ctrl + letter */
         ctrl: false,

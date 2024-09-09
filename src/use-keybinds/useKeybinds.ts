@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Register, { EVT } from "./Register.js";
-import { Key } from "./HexMap.js";
+import { Key } from "./Keycodes.js";
 import { EventEmitter } from "events";
 import { randomUUID } from "crypto";
 import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
@@ -159,16 +159,16 @@ export type Binding = {
     notInput?: string[];
 };
 
-export type StdinData<T extends KeyBinds> = {
+export type StdinData<T extends KeyBinds = any> = {
     register: string;
     event: KeyBindEvent<T> | "";
 };
 
-export interface OnEvent<T extends KeyBinds> {
+export interface OnEvent<T extends KeyBinds = any> {
     (cmd: WONums<T>, handler: (stdin: string) => unknown): void;
 }
 
-export interface OnEventGenerator<T extends KeyBinds> {
+export interface OnEventGenerator<T extends KeyBinds = any> {
     (unsubscriberList: (() => void)[]): OnEvent<T>;
 }
 
@@ -177,5 +177,5 @@ export interface OnEventGenerator<T extends KeyBinds> {
 export type WONums<T extends object> = T extends object
     ? keyof T extends string | symbol
         ? keyof T
-        : never
-    : never;
+        : string
+    : string;

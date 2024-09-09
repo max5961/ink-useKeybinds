@@ -1,14 +1,15 @@
 {
-    "name": "@mmorrissey5961/ink-use-keybinds",
+    "name": "@mmorrissey5961/ink-utils",
     "version": "1.1.5",
-    "description": "An extension of Ink's builtin useInput hook",
+    "description": "A collection of ink utility hooks and components",
     "main": "dist/index.js",
-    "module": "ES6",
-    "target": "ES6",
+    "module": "NodeNext",
+    "target": "NodeNext",
     "moduleResolution": "node",
     "scripts": {
-        "compile": "tsc",
-        "start": "tsc && node ./dist/App/root.js",
+        "compile": "tsc --project tsconfig.prod.json",
+        "compile:dev": "tsc --project tsconfig.json",
+        "start": "npm run compile:dev && node ./dist/App/root.js",
         "test": "vitest"
     },
     "keywords": [

@@ -1,4 +1,4 @@
-export const HEX_MAP = {
+export const KEYCODES = {
     backspace: "\x7F",
     delete: "\x1B[3~",
     esc: "\x1B",
@@ -26,8 +26,8 @@ export const HEX_MAP = {
 
 export function newKeyRegister(): NonAlphaKeys {
     const keyRegister = {} as NonAlphaKeys;
-    for (const key in HEX_MAP) {
-        if (key !== HEX_MAP.sigint) {
+    for (const key in KEYCODES) {
+        if (key !== KEYCODES.sigint) {
             keyRegister[key] = false;
         }
     }
@@ -36,7 +36,7 @@ export function newKeyRegister(): NonAlphaKeys {
 
 export type NonAlphaKeys = Omit<
     {
-        [P in keyof typeof HEX_MAP]: boolean;
+        [P in keyof typeof KEYCODES]: boolean;
     },
     "sigint"
 > & { ctrl: boolean };

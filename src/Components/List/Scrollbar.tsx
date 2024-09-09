@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { ViewState } from "./List.js";
+import { ViewState } from "./useList.js";
 
 type SBProps = {
     viewState: ViewState;

@@ -4,8 +4,8 @@ import {
     Binding,
     KeyBindEvent,
     KeyBinds,
-} from "src/use-keybinds/useKeybinds.js";
-import { HEX_MAP, Key } from "src/use-keybinds/HexMap.js";
+} from "../../use-keybinds/useKeybinds.js";
+import { KEYCODES, Key } from "../../use-keybinds/Keycodes.js";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
 
@@ -30,6 +30,8 @@ export type InputState = {
 type Opts = {
     enter?: Binding | Binding[];
     exit?: Binding | Binding[];
+    defaultVal?: string;
+    active?: boolean;
 };
 
 export type UseFormReturn = {
@@ -43,8 +45,8 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     const [emitter] = useState(new EventEmitter());
 
     const [state, setState] = useState<InputState>({
-        str: "",
-        idx: 0,
+        str: opts?.defaultVal || "",
+        idx: opts?.defaultVal?.length || 0,
         insert: false,
     });
 
@@ -57,6 +59,8 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         { key: "return" },
         { key: "esc" },
     ];
+
+    const ACTIVE = opts?.active === undefined ? true : opts?.active;
 
     /*
      * Get normal keybindings
@@ -95,12 +99,21 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     } satisfies KeyBinds;
     insertKb[EXIT_ID] = EXIT;
 
+    const priority = (() => {
+        if (!ACTIVE) {
+            return "never";
+        }
+        return state.insert ? "textinput" : "default";
+    })();
     const config = state.insert ? insertKb : normalKb;
     const { onEvent } = useKeybinds<typeof insertKb | typeof normalKb>(config, {
-        priority: state.insert ? "textinput" : "default",
+        priority,
     });
 
     onEvent(ENTER_ID as KeyBindEvent<typeof normalKb>, (stdin: string) => {
+        // TODO
+        // This needs to be done in a way that the event is only emitted once
+        // the state is actually changed
         setState({ ...state, insert: true });
         if (!state.insert) {
             emitter.emit("enter", stdin);
@@ -108,6 +121,9 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     });
 
     onEvent(EXIT_ID as KeyBindEvent<typeof insertKb>, (stdin: string) => {
+        // TODO
+        // This needs to be done in a way that the event is only emitted once
+        // the state is actually changed
         setState({ ...state, insert: false, idx: state.str.length });
         if (state.insert) {
             emitter.emit("submit", stdin);
@@ -145,7 +161,11 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     });
 
     onEvent("keypress", (char: string) => {
-        const invalidChars = [HEX_MAP.esc, HEX_MAP.insert, HEX_MAP.return];
+        if (state.insert) {
+            emitter.emit("keypress", char);
+        }
+
+        const invalidChars = [KEYCODES.esc, KEYCODES.insert, KEYCODES.return];
         for (const invalidChar of invalidChars) {
             if (invalidChar === char) {
                 return;

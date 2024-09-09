@@ -1,109 +1,172 @@
 import React, { useState } from "react";
+import { initialItems, Item, keybinds } from "./initialData.js";
+import useList from "../Components/List/useList.js";
+import { OnEvent } from "../use-keybinds/useKeybinds.js";
 import { Box, Text, useApp } from "ink";
-import { StdinState } from "../Components/StdinState/StdinState.js";
-import { Input } from "../Components/Input/Input.js";
+import { List, useIsFocus, useOnItem } from "../Components/List/List.js";
+import { useOnEvent } from "../use-keybinds/KeybindsProvider.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
-import { KeyBinds } from "src/use-keybinds/useKeybinds.js";
-import {
-    KeybindsProvider,
-    useOnEvent,
-} from "src/use-keybinds/KeybindsProvider.js";
-import { Command, Commands } from "../Components/Command/Command.js";
-
-const kbs = {
-    foo: { input: "b" },
-    ctrlA: { key: "ctrl", input: "a" },
-    quit: { input: "q" },
-} satisfies KeyBinds;
-
-const commands: Commands = {
-    foo: () => {
-        console.log("foo command");
-    },
-    bar: () => {
-        console.log("bar command");
-    },
-};
+import { Input } from "../Components/Input/Input.js";
+import { useOnCmd } from "../Components/Command/CommandLine.js";
 
 export default function App(): React.ReactNode {
-    return (
-        <>
-            <KeybindsProvider config={kbs}>
-                <FooUpdater />
-                <InputTest />
-                <KbStateView />
-                <Command commands={commands} />
-            </KeybindsProvider>
-        </>
-    );
-}
-
-const InputTest = React.memo(function InputTest(): React.ReactNode {
-    const text = useFormInput();
-
-    function isValidText(str: string) {
-        return str === "no this is patrick";
-    }
-
-    function onSubmit() {
-        if (isValidText(text.str)) {
-            console.log("thanks for submitting your form");
-        } else {
-            console.log("wrong passphrase try again");
-        }
-    }
-
-    return (
-        <Box
-            borderStyle="round"
-            borderColor={isValidText(text.str) ? "green" : "red"}
-        >
-            <Input text={text} onSubmit={onSubmit} mask={false} />
-        </Box>
-    );
-});
-
-function FooUpdater(): React.ReactNode {
-    const [foo, setFoo] = useState("foo");
+    const [items, setItems] = useState(initialItems);
+    const [shoutout, setShoutout] = useState<string>("");
+    const [exp, setExp] = useState(true);
     const { exit } = useApp();
 
-    const onEvent = useOnEvent<typeof kbs>();
-
-    onEvent("foo", () => {
-        setFoo("foo");
+    const { viewState, util } = useList(items.length, {
+        keybinds,
+        windowSize: 7,
+        // should be navigation: "vi" | "default" | "none"
+        navigation: { vi: true },
+        centerScroll: true,
     });
 
-    onEvent("ctrlA", () => {
-        setFoo("ctrl a foo");
+    const onEvent = useOnEvent<typeof keybinds>();
+    const onCmd = useOnCmd();
+
+    onCmd("foo", () => {
+        setShoutout("Ayoooo shoutout is fooo!!!");
+    });
+
+    onCmd("bar", () => {
+        setShoutout("Shoutout to bar");
+    });
+
+    onEvent("expand", () => {
+        if (exp) {
+            util.modifyWinSize(1);
+        } else {
+            util.modifyWinSize(Infinity);
+        }
+        setExp(!exp);
+    });
+
+    onEvent("windowSize5", () => {
+        util.modifyWinSize(5);
     });
 
     onEvent("quit", () => {
         exit();
     });
 
+    const itemGen = items.map((desc, idx) => {
+        return (isFocus: boolean, onItem: OnEvent<typeof keybinds>) => {
+            onItem("deleteItem", () => {
+                const copy = items.slice();
+                copy.splice(idx, 1);
+                setItems(copy);
+            });
+
+            onItem("toggleDone", () => {
+                const copy = items.slice();
+                copy[idx] = {
+                    ...copy[idx],
+                    completed: !copy[idx].completed,
+                };
+                setItems(copy);
+            });
+
+            onItem("updateShoutout", () => {
+                setShoutout(desc.id.slice(0, 5));
+            });
+
+            return (
+                <ListItem
+                    key={desc.id}
+                    {...{ items, setItems, idx, isFocus }}
+                />
+            );
+        };
+    });
+
+    const wordList = items.map((i) => i.name);
+
     return (
-        <Box borderStyle="bold" borderColor="yellow">
-            <Text>Bro Updater</Text>
-            <Box borderStyle="round">
-                <Text>{foo}</Text>
+        <Box
+            width="100"
+            height="100"
+            display="flex"
+            flexDirection="column"
+            justifyContent="center"
+            alignItems="center"
+        >
+            <Text>{`Last shoutout was: ${shoutout}`}</Text>
+            <Box borderStyle="round" width={50} borderColor="gray">
+                <List
+                    itemGenerators={itemGen}
+                    viewState={viewState}
+                    wordList={wordList}
+                    scrollBar={true}
+                    scrollColor="blue"
+                />
             </Box>
         </Box>
     );
 }
 
-function KbStateView(): React.ReactNode {
+type LIProps = {
+    items: Item[];
+    setItems: (items: Item[]) => void;
+    isFocus: boolean;
+    idx: number;
+};
+
+function ListItem({ isFocus, items, idx, setItems }: LIProps): React.ReactNode {
+    const item = items[idx];
+
+    const text = useFormInput({
+        enter: { input: "i" },
+        exit: { key: "esc" },
+        defaultVal: item.name,
+        active: isFocus,
+    });
+
+    function onSubmit() {
+        const copy = items.slice();
+        copy[idx] = { ...item, name: text.str };
+        setItems(copy);
+    }
+
+    const color = isFocus ? "blue" : "";
+    const focusCaret = isFocus ? ">" : " ";
+    let cmpIcon = "";
+    if (item.completed) {
+        cmpIcon = " ";
+    }
+
+    return (
+        <Box display="flex" justifyContent="space-between">
+            <Text color={color}>
+                {`${focusCaret} item ${item.id.slice(0, 5)}: `}
+            </Text>
+            <Input text={text} color={color} onSubmit={onSubmit} />
+            <Text color={color}>{cmpIcon}</Text>
+            <NestedListItem />
+        </Box>
+    );
+}
+
+function NestedListItem(): React.ReactNode {
+    const [state, setState] = useState<number>(0);
+
+    const onCmd = useOnItem<typeof keybinds>();
+    const isFocus = useIsFocus();
+
+    const color = isFocus ? "blue" : "";
+
+    onCmd("incSubCount", () => {
+        setState(state + 1);
+    });
+
+    onCmd("decSubCount", () => {
+        setState(state - 1);
+    });
+
     return (
         <>
-            <StdinState>
-                <Box width="90%" display="flex" justifyContent="space-between">
-                    <Text>
-                        Command: <StdinState.Event />
-                    </Text>
-                    <Text>
-                        Register: <StdinState.Register />
-                    </Text>
-                </Box>
-            </StdinState>
+            <Text color={color}>{` ${state}`}</Text>
         </>
     );
 }
