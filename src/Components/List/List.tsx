@@ -6,7 +6,7 @@ import { KeyBinds, OnEvent } from "../../use-keybinds/useKeybinds.js";
 import { useContext, createContext } from "react";
 import assert from "assert";
 import { ViewState } from "./useList.js";
-import { Search } from "../Find/Find.js";
+import { Search } from "../Search/Search.js";
 
 interface ItemGen<T extends KeyBinds = any> {
     (isFocus: boolean, onItem: OnEvent<T>): React.ReactNode;

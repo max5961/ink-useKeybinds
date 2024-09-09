@@ -7,7 +7,7 @@ import { List, useIsFocus, useOnItem } from "../Components/List/List.js";
 import { useOnEvent } from "../use-keybinds/KeybindsProvider.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
 import { Input } from "../Components/Input/Input.js";
-import { useOnCmd } from "../Components/Command/CommandLine.js";
+import { useOnCmd } from "../Components/CommandLine/CommandLine.js";
 
 export default function App(): React.ReactNode {
     const [items, setItems] = useState(initialItems);

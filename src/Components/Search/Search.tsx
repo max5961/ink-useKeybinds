@@ -27,8 +27,6 @@ export function Search({ wordList, goToIdx, idx }: Props): React.ReactNode {
 
     // console.log(state.matches.map((i) => wordList[i]));
 
-    const text = useFormInput({ enter, exit });
-
     const { onEvent } = useKeybinds({
         nextMatch: { input: "n" },
         prevMatch: { input: "N" },
@@ -57,6 +55,7 @@ export function Search({ wordList, goToIdx, idx }: Props): React.ReactNode {
         }
     }
 
+    const text = useFormInput({ enter, exit });
     function onKeypress(stdin: string) {
         // prettier-ignore
         const sortedIndexes = getSortedIndexes(idx, wordList.length, state.direction);
@@ -71,11 +70,13 @@ export function Search({ wordList, goToIdx, idx }: Props): React.ReactNode {
     }
 
     function onEnter(stdin: string) {
+        console.log("entering...");
+
         text.clearText();
-        if (stdin === "/") {
+        if (stdin === "/" && state.direction !== "FORWARD") {
             return setState({ ...state, direction: "FORWARD" });
         }
-        if (stdin === "?") {
+        if (stdin === "?" && state.direction !== "BACKWARD") {
             return setState({ ...state, direction: "BACKWARD" });
         }
     }

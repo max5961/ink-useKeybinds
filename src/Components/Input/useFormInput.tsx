@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     useKeybinds,
     Binding,
@@ -25,6 +25,7 @@ export type InputState = {
     str: string;
     idx: number;
     insert: boolean;
+    stdin: string | null;
 };
 
 type Opts = {
@@ -48,6 +49,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         str: opts?.defaultVal || "",
         idx: opts?.defaultVal?.length || 0,
         insert: false,
+        stdin: null,
     });
 
     const ENTER: Binding | Binding[] = opts?.enter || [
@@ -110,24 +112,31 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         priority,
     });
 
-    onEvent(ENTER_ID as KeyBindEvent<typeof normalKb>, (stdin: string) => {
-        // TODO
-        // This needs to be done in a way that the event is only emitted once
-        // the state is actually changed
-        setState({ ...state, insert: true });
-        if (!state.insert) {
-            emitter.emit("enter", stdin);
+    const mounted = useRef(false);
+
+    useEffect(() => {
+        if (!mounted.current) {
+            mounted.current = true;
+            return;
         }
+
+        if (state.insert) {
+            emitter.emit("enter", state.stdin);
+        } else {
+            emitter.emit("submit", state.stdin);
+        }
+    }, [state.insert]);
+
+    onEvent(ENTER_ID as KeyBindEvent<typeof normalKb>, (stdin: string) => {
+        setState((prev) => {
+            return { ...prev, stdin, insert: true };
+        });
     });
 
     onEvent(EXIT_ID as KeyBindEvent<typeof insertKb>, (stdin: string) => {
-        // TODO
-        // This needs to be done in a way that the event is only emitted once
-        // the state is actually changed
-        setState({ ...state, insert: false, idx: state.str.length });
-        if (state.insert) {
-            emitter.emit("submit", stdin);
-        }
+        setState((prev) => {
+            return { ...prev, stdin, insert: false, idx: prev.str.length };
+        });
     });
 
     onEvent("left", () => {
@@ -160,14 +169,14 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         setState({ ...state, str: nextStr, idx: nextIdx });
     });
 
-    onEvent("keypress", (char: string) => {
+    onEvent("keypress", (stdin: string) => {
         if (state.insert) {
-            emitter.emit("keypress", char);
+            emitter.emit("keypress", stdin);
         }
 
         const invalidChars = [KEYCODES.esc, KEYCODES.insert, KEYCODES.return];
         for (const invalidChar of invalidChars) {
-            if (invalidChar === char) {
+            if (invalidChar === stdin) {
                 return;
             }
         }
@@ -175,10 +184,10 @@ export function useFormInput(opts?: Opts): UseFormReturn {
         let nextStringInput = state.str;
 
         if (state.insert) {
-            nextStringInput = `${state.str.slice(0, state.idx)}${char}${state.str.slice(state.idx)}`;
+            nextStringInput = `${state.str.slice(0, state.idx)}${stdin}${state.str.slice(state.idx)}`;
         }
 
-        const nextIdx = char ? state.idx + char.length : state.idx;
+        const nextIdx = stdin ? state.idx + stdin.length : state.idx;
 
         if (nextIdx !== state.idx && state.insert) {
             setState({
@@ -190,11 +199,17 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     });
 
     function clearText(): void {
-        setState({ ...state, str: "", idx: 0 });
+        setState((prev) => {
+            return { ...prev, str: "", idx: 0 };
+        });
+        // setState({ ...state, str: "", idx: 0 });
     }
 
     function setText(newText: string): void {
-        setState({ ...state, str: newText, idx: newText.length });
+        setState((prev) => {
+            return { ...prev, str: newText, idx: newText.length };
+        });
+        // setState({ ...state, str: newText, idx: newText.length });
     }
 
     return { ...state, emitter, clearText, setText };

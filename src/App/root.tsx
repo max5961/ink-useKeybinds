@@ -4,7 +4,7 @@ import App from "./App.js";
 import { KeybindProcessingGate } from "../use-keybinds/KeybindProcessingGate.js";
 import { KeybindsProvider } from "../use-keybinds/KeybindsProvider.js";
 import { keybinds } from "./initialData.js";
-import { CommandLine } from "../Components/Command/CommandLine.js";
+import { CommandLine } from "../Components/CommandLine/CommandLine.js";
 
 const commands = {
     foo: null,
