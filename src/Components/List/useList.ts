@@ -1,7 +1,7 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { produce } from "immer";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { shallowEqualObjects } from "shallow-equal";
 import { KeyBinds, useKeybinds } from "../../use-keybinds/useKeybinds.js";
 
@@ -50,6 +50,8 @@ const defaultKeybinds = {
 const defaultVi = {
     increment: [{ input: "j" }, { key: "down" }, { key: "tab" }],
     decrement: [{ input: "k" }, { key: "up" }],
+    scroll_up: { key: "ctrl", input: "u" },
+    scroll_down: { key: "ctrl", input: "d" },
     goToTop: { input: "gg" },
     goToBottom: { input: "G" },
 } satisfies KeyBinds;
@@ -153,7 +155,8 @@ export default function useList(
                      * without cutting idx out of frame, then cut from top. */
                     if (draft.idx < draft.end - 1) {
                         --draft.end;
-                    } else if (draft.idx <= draft.end - 1) {
+                    } else if (draft.idx === draft.end - 1) {
+                        // console.log("ayo am i even getting le triggered");
                         ++draft.start;
                     } else {
                         // For dev
@@ -174,6 +177,8 @@ export default function useList(
             /* Just in case idx somehow gets out of frame after the resize */
             draft.idx = Math.min(draft.idx, draft.end - 1);
             draft.idx = Math.max(draft.idx, draft.start);
+
+            // This is the problem in case nextSize isn't equal to trueWindowSize
             draft._winSize = nextSize;
 
             if (opts.centerScroll) {
@@ -188,15 +193,22 @@ export default function useList(
         }
     }
 
+    function getTrueWindowSize(start, end): number {
+        return Math.min(LENGTH, end) - start;
+    }
+
     function getNormalScrollChanges(nextIdx: number): HookState {
         return produce(state, (draft) => {
             if (LENGTH === 0) return;
             if (
                 (draft.start === 0 && draft.end === 0) ||
                 draft.start === draft.end
-            )
+            ) {
                 return;
+            }
 
+            draft.end = Math.min(draft.end, LENGTH);
+            draft.start = Math.max(draft.start, 0);
             const getTrueWindowSize = () => {
                 return Math.min(LENGTH, draft.end) - draft.start;
             };
@@ -239,6 +251,8 @@ export default function useList(
         const noIdxChange = nextIdx === state.idx;
 
         return produce(state, (draft) => {
+            draft.end = Math.min(draft.end, LENGTH);
+            draft.start = Math.max(draft.start, 0);
             if (LENGTH === 0) return;
             if (draft.start === 0 && draft.end === 0) return;
 
@@ -288,7 +302,8 @@ export default function useList(
 
     function centerIdx(draft: HookState) {
         const getMid = (s, e) => Math.floor((s + e) / 2);
-        while (draft.idx > getMid(draft.start, draft.end) && draft.start > 0) {
+        // prettier-ignore
+        while (draft.idx > getMid(draft.start, draft.end) && draft.end < LENGTH) {
             ++draft.start;
             ++draft.end;
         }
@@ -313,7 +328,7 @@ export default function useList(
     >(config as any);
 
     // prettier-ignore
-    const willHandle = { increment: null, decrement: null, goToTop: null, goToBottom: null, };
+    const willHandle = { increment: null, decrement: null, goToTop: null, goToBottom: null, scroll_up: null, scroll_down: null};
     for (const key in config) {
         if (key in willHandle) {
             continue;
@@ -342,6 +357,20 @@ export default function useList(
     onEvent("goToBottom", () => {
         emitter.emit("goToBottom");
         goToIndex(LENGTH - 1);
+    });
+
+    onEvent("scroll_down", () => {
+        console.log("ayo?");
+        const half = Math.floor(WINDOW_SIZE / 2);
+        const nextIdx = Math.min(LENGTH, state.idx + half);
+        goToIndex(nextIdx);
+    });
+
+    onEvent("scroll_up", () => {
+        console.log("ayo up?");
+        const half = Math.floor(WINDOW_SIZE / 2);
+        const nextIdx = Math.max(0, state.idx - half);
+        goToIndex(nextIdx);
     });
 
     const util = {

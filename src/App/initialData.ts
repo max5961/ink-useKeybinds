@@ -37,8 +37,6 @@ export const keybinds = {
     toggleDone: { key: "return" },
     updateShoutout: [{ input: " s" }, { input: " o" }],
     deleteItem: { input: "dd" },
-    scrollDown: { key: "ctrl", input: "d" },
-    scrollUp: { key: "ctrl", input: "u" },
     toggleWhichList: { input: "ll" },
     windowSize5: { input: "w5" },
     windowSizeMax: { input: "wm" },
