@@ -9,7 +9,8 @@ type LIProps<T extends KeyBinds = any> = React.PropsWithChildren & {
     isFocus: boolean;
     onItem: OnEvent<T>;
     emitter: EventEmitter;
-    isHidden?: boolean;
+    isHidden: boolean;
+    maintainState: boolean;
 };
 
 type LIContext<T extends KeyBinds = any> = {
@@ -25,8 +26,19 @@ export function ListItem<T extends KeyBinds = any>({
     onItem,
     emitter,
     isFocus,
-    isHidden = false,
+    isHidden,
+    maintainState,
 }: LIProps<T>): React.ReactNode {
+    const hidden = isHidden && maintainState && (
+        <Box height={0} width={0} overflow="hidden">
+            {children}
+        </Box>
+    );
+
+    const mounted = !isHidden && <Box>{children}</Box>;
+
+    const unmounted = isHidden && !maintainState && null;
+
     return (
         <ListItemContext.Provider
             value={{
@@ -35,15 +47,33 @@ export function ListItem<T extends KeyBinds = any>({
                 emitter,
             }}
         >
-            {isHidden ? (
+            {isHidden && maintainState ? (
                 <Box height={0} width={0} overflow="hidden">
                     {children}
                 </Box>
-            ) : (
+            ) : !isHidden ? (
                 <Box>{children}</Box>
-            )}
+            ) : null}
         </ListItemContext.Provider>
     );
+
+    // return (
+    //     <ListItemContext.Provider
+    //         value={{
+    //             isFocus,
+    //             onItem,
+    //             emitter,
+    //         }}
+    //     >
+    //         {isHidden && maintainState ? (
+    //             <Box height={0} width={0} overflow="hidden">
+    //                 {children}
+    //             </Box>
+    //         ) : (
+    //             <Box>{children}</Box>
+    //         )}
+    //     </ListItemContext.Provider>
+    // );
 }
 
 const errMsg = (hook: string) => {

@@ -10,7 +10,7 @@ import { useFormInput } from "../Components/Input/useFormInput.js";
 import { Input } from "../Components/Input/Input.js";
 import { useOnCmd } from "../Components/CommandLine/CommandLine.js";
 
-export default function App(): React.ReactNode {
+function App(): React.ReactNode {
     const [items, setItems] = useState(initialItems);
     const [shoutout, setShoutout] = useState<string>("");
     const [exp, setExp] = useState(true);
@@ -18,7 +18,7 @@ export default function App(): React.ReactNode {
 
     const { viewState, util } = useList(items.length, {
         keybinds,
-        windowSize: 3,
+        windowSize: 7,
         navigation: "vi",
         centerScroll: false,
         circular: false,
@@ -103,7 +103,6 @@ export default function App(): React.ReactNode {
                     scrollBar={true}
                     scrollBarPosition="post"
                     scrollColor="blue"
-                    maintainState={true}
                 />
             </Box>
         </Box>

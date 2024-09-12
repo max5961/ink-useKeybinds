@@ -18,6 +18,7 @@ type Props<T extends KeyBinds = any> = {
     scrollBarPosition?: "pre" | "post";
     wordList?: string[];
     vertical?: boolean;
+    maintainState?: boolean;
 };
 
 export function List<T extends KeyBinds = any>({
@@ -28,6 +29,7 @@ export function List<T extends KeyBinds = any>({
     scrollColor = "white",
     scrollBarPosition = "post",
     vertical = true,
+    maintainState = true,
 }: Props<T>): ReactNode {
     const [hw, setHw] = useState<{ height: number; width: number }>({
         height: 0,
@@ -58,6 +60,7 @@ export function List<T extends KeyBinds = any>({
                     isFocus={idx === viewState._idx}
                     emitter={viewState._emitter}
                     isHidden={isHidden}
+                    maintainState={maintainState}
                 >
                     {node}
                 </ListItem>
