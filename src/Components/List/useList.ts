@@ -1,11 +1,8 @@
-import assert from "assert";
 import EventEmitter from "events";
-import { produce } from "immer";
 import { useState } from "react";
-import { shallowEqualObjects } from "shallow-equal";
 import { KeyBinds, useKeybinds } from "../../use-keybinds/useKeybinds.js";
-import ListKeybinds from "./ListKeybinds.js";
-import HandleScroll from "./HandleScroll.js";
+import { ListKeybinds } from "./ListKeybinds.js";
+import { HandleScroll } from "./HandleScroll.js";
 
 export type Opts = {
     windowSize?: number | null;
@@ -13,8 +10,8 @@ export type Opts = {
     navigation?: "none" | "vi" | "arrows";
     scrollBar?: boolean;
     centerScroll?: boolean;
-    cmdHandler?: any;
     emitter?: EventEmitter;
+    circular?: boolean;
 };
 
 export type HookState = {
@@ -55,6 +52,7 @@ export default function useList(
         centerScroll: false,
         navigation: "vi",
         emitter: new EventEmitter(),
+        circular: false,
         ...opts,
     };
 
@@ -74,19 +72,26 @@ export default function useList(
     });
 
     const LENGTH = itemsLength;
-    const WINDOW_SIZE = Math.min(state._winSize || LENGTH, LENGTH);
+    const WINDOW_SIZE = Math.min(state._winSize ?? LENGTH, LENGTH);
 
     const init = {
         state,
         setState,
         LENGTH,
         WINDOW_SIZE,
-        centerScroll: opts.centerScroll || false,
+        opts,
     };
 
     const handleScroll = new HandleScroll(init);
-    const { handle, nextItem, prevItem, modifyWinSize, goToIndex } =
-        handleScroll.getFunctions();
+    const {
+        handle,
+        nextItem,
+        prevItem,
+        modifyWinSize,
+        goToIndex,
+        scrollDown,
+        scrollUp,
+    } = handleScroll.getFunctions();
 
     handle();
 
@@ -136,15 +141,11 @@ export default function useList(
     });
 
     onEvent("scroll_down", () => {
-        const half = Math.floor(WINDOW_SIZE / 2);
-        const nextIdx = Math.min(LENGTH - 1, state.idx + half);
-        goToIndex(nextIdx);
+        scrollDown();
     });
 
     onEvent("scroll_up", () => {
-        const half = Math.floor(WINDOW_SIZE / 2);
-        const nextIdx = Math.max(0, state.idx - half);
-        goToIndex(nextIdx);
+        scrollUp();
     });
 
     const util = {

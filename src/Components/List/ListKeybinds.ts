@@ -14,7 +14,7 @@ const vim = {
     goToBottom: { input: "G" },
 } satisfies KeyBinds;
 
-export default {
+export const ListKeybinds = {
     arrow,
     vim,
 };

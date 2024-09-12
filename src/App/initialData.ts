@@ -38,7 +38,7 @@ export const keybinds = {
     updateShoutout: [{ input: " s" }, { input: " o" }],
     deleteItem: { input: "dd" },
     toggleWhichList: { input: "ll" },
-    windowSize5: { input: "w5" },
+    windowSize0: { input: "w0" },
     windowSizeMax: { input: "wm" },
     incSubCount: { input: "l" },
     decSubCount: { input: "h" },

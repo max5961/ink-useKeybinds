@@ -25,8 +25,6 @@ export function Search({ wordList, goToIdx, idx }: Props): React.ReactNode {
         direction: "FORWARD",
     });
 
-    // console.log(state.matches.map((i) => wordList[i]));
-
     const { onEvent } = useKeybinds({
         nextMatch: { input: "n" },
         prevMatch: { input: "N" },
@@ -131,16 +129,17 @@ function getMatchedIndexes(
     wordList: string[],
     searchTerm: string,
 ): number[] {
-    while (searchTerm.endsWith("\\")) {
-        searchTerm = searchTerm.slice(0, searchTerm.length - 1);
-    }
+    const searchTermSanitized = searchTerm.replaceAll(
+        /[&/\\#,+()$~%.^'":*?<>{}]/g,
+        "",
+    );
 
     const matches: number[] = [];
 
     for (const idx of sortedIndexes) {
         const word = wordList[idx];
 
-        if (word.match(new RegExp(searchTerm, "gmi"))) {
+        if (word.match(new RegExp(searchTermSanitized, "gmi"))) {
             matches.push(idx);
         }
     }

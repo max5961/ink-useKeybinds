@@ -19,7 +19,8 @@ export default function App(): React.ReactNode {
         keybinds,
         windowSize: 7,
         navigation: "vi",
-        centerScroll: false,
+        centerScroll: true,
+        circular: true,
     });
 
     const onEvent = useOnEvent<typeof keybinds>();
@@ -42,9 +43,8 @@ export default function App(): React.ReactNode {
         setExp(!exp);
     });
 
-    onEvent("windowSize5", () => {
-        console.log("brah");
-        util.modifyWinSize(5);
+    onEvent("windowSize0", () => {
+        util.modifyWinSize(0);
     });
 
     onEvent("quit", () => {
