@@ -1,23 +1,23 @@
 import React, { useState, ReactNode, useRef, useEffect } from "react";
-import { Box, measureElement, Text } from "ink";
-import EventEmitter from "events";
+import { Box, measureElement } from "ink";
 import ScrollBar from "./Scrollbar.js";
 import { KeyBinds, OnEvent } from "../../use-keybinds/useKeybinds.js";
-import { useContext, createContext } from "react";
-import assert from "assert";
 import { ViewState } from "./useList.js";
 import { Search } from "../Search/Search.js";
+import { ListItem } from "./ListItem.js";
 
 interface ItemGen<T extends KeyBinds = any> {
     (isFocus: boolean, onItem: OnEvent<T>): React.ReactNode;
 }
 
-type ListProps<T extends KeyBinds = any> = {
+type Props<T extends KeyBinds = any> = {
     itemGenerators: ItemGen<T>[];
     viewState: ViewState;
     scrollBar?: boolean;
     scrollColor?: string;
+    scrollBarPosition?: "pre" | "post";
     wordList?: string[];
+    vertical?: boolean;
 };
 
 export function List<T extends KeyBinds = any>({
@@ -26,13 +26,13 @@ export function List<T extends KeyBinds = any>({
     wordList,
     scrollBar = true,
     scrollColor = "white",
-}: ListProps<T>): ReactNode {
+    scrollBarPosition = "post",
+    vertical = true,
+}: Props<T>): ReactNode {
     const [hw, setHw] = useState<{ height: number; width: number }>({
         height: 0,
         width: 0,
     });
-
-    const ref = useRef();
 
     const generatedItems: ReactNode[] = itemGenerators
         // Create the nodes
@@ -68,6 +68,7 @@ export function List<T extends KeyBinds = any>({
      * helpful if the window size was effected by these refs, or if there
      * were any overflowed elements to decrease window size until there
      * weren't any */
+    const ref = useRef();
     useEffect(() => {
         if (scrollBar) {
             const { width, height } = measureElement(ref.current as any);
@@ -75,100 +76,70 @@ export function List<T extends KeyBinds = any>({
         }
     }, [itemGenerators, viewState]);
 
-    return (
-        <Box flexDirection="column" width="100">
+    const scrollBarPre = scrollBarPosition === "pre" && (
+        <ScrollBar
+            viewState={viewState}
+            height={hw.height}
+            width={hw.width}
+            color={scrollColor}
+        />
+    );
+
+    const scrollBarPost = scrollBarPosition === "post" && (
+        <ScrollBar
+            viewState={viewState}
+            height={hw.height}
+            width={hw.width}
+            color={scrollColor}
+        />
+    );
+
+    const search = wordList && viewState._winSize > 0 && (
+        <Search
+            wordList={wordList}
+            idx={viewState._idx}
+            goToIdx={viewState._util.goToIndex}
+        />
+    );
+
+    const verticalList = vertical && (
+        <Box flexDirection="column" width="100%">
             <Box
                 flexDirection="row"
                 justifyContent="space-between"
                 width="100%"
             >
-                <Box display="flex" flexDirection="column">
-                    <Box flexShrink={1} flexDirection="column" ref={ref as any}>
+                {scrollBarPre}
+                <Box display="flex" flexGrow={1} flexDirection="column">
+                    <Box flexDirection="column" ref={ref as any}>
+                        {generatedItems}
+                    </Box>
+                </Box>
+                {scrollBarPost}
+            </Box>
+            {search}
+        </Box>
+    );
+
+    const horizontalList = !vertical && (
+        <Box flexDirection="row" height="100%">
+            <Box
+                flexDirection="column"
+                justifyContent="space-between"
+                height="100%"
+            >
+                {scrollBarPre}
+                <Box display="flex" flexDirection="row">
+                    <Box flexShrink={1} flexDirection="row" ref={ref as any}>
                         {generatedItems}
                     </Box>
                     <Box flexGrow={1}></Box>
                 </Box>
-                {scrollBar && (
-                    <ScrollBar
-                        viewState={viewState}
-                        height={hw.height}
-                        width={hw.width}
-                        color={scrollColor}
-                    />
-                )}
+                {scrollBarPost}
             </Box>
-            {wordList && (
-                <Search
-                    wordList={wordList}
-                    idx={viewState._idx}
-                    goToIdx={viewState._util.goToIndex}
-                />
-            )}
+            {search}
         </Box>
     );
-}
 
-type LIProps<T extends KeyBinds = any> = React.PropsWithChildren & {
-    isFocus: boolean;
-    onItem: OnEvent<T>;
-    emitter: EventEmitter;
-    isHidden?: boolean;
-};
-
-type LIContext<T extends KeyBinds = any> = {
-    onItem: OnEvent<T>;
-    isFocus: boolean;
-    emitter: EventEmitter;
-};
-
-const ListItemContext = createContext<LIContext | null>(null);
-
-function ListItem<T extends KeyBinds = any>({
-    children,
-    onItem,
-    emitter,
-    isFocus,
-    isHidden = false,
-}: LIProps<T>): React.ReactNode {
-    return (
-        <ListItemContext.Provider
-            value={{
-                isFocus,
-                onItem,
-                emitter,
-            }}
-        >
-            {isHidden ? (
-                <Box height={0} width={0} overflow="hidden">
-                    {children}
-                </Box>
-            ) : (
-                <Box>{children}</Box>
-            )}
-        </ListItemContext.Provider>
-    );
-}
-
-const errMsg = (hook: string) => {
-    return `It appears you are attempting to use the ${hook} hook outside the context of a List component (http://github.com/max5961/ink-list)`;
-};
-export function useListItemContext(): LIContext {
-    const context = useContext(ListItemContext);
-    assert(context, errMsg("useListItemContext"));
-    return context;
-}
-export function useOnItem<T extends KeyBinds = any>(): OnEvent<T> {
-    const context = useContext(ListItemContext);
-    assert(context, errMsg("useOnItem"));
-    return context.onItem;
-}
-export function useIsFocus(): boolean {
-    const context = useContext(ListItemContext);
-    assert(context, errMsg("useIsFocus"));
-    return context.isFocus;
-}
-export function useListItemEmitter(): EventEmitter {
-    const context = useContext(ListItemContext);
-    assert(context, errMsg("useListItemEmitter"));
-    return context.emitter;
+    return horizontalList || verticalList;
 }

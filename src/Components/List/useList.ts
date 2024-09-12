@@ -7,11 +7,12 @@ import { HandleScroll } from "./HandleScroll.js";
 export type Opts = {
     windowSize?: number | null;
     keybinds?: KeyBinds;
-    navigation?: "none" | "vi" | "arrows";
+    navigation?: "none" | "vi" | "arrow";
     scrollBar?: boolean;
     centerScroll?: boolean;
     emitter?: EventEmitter;
     circular?: boolean;
+    vertical?: boolean;
 };
 
 export type HookState = {
@@ -53,6 +54,7 @@ export default function useList(
         navigation: "vi",
         emitter: new EventEmitter(),
         circular: false,
+        vertical: true,
         ...opts,
     };
 
@@ -97,14 +99,30 @@ export default function useList(
 
     const emitter = opts.emitter || new EventEmitter();
 
+    const getVim = () => {
+        if (opts.navigation !== "vi") return {};
+        return opts.vertical
+            ? ListKeybinds.vimVertical
+            : ListKeybinds.vimHorizontal;
+    };
+
+    const getArrow = () => {
+        if (opts.navigation !== "arrow") return {};
+        return opts.vertical
+            ? ListKeybinds.arrowVertical
+            : ListKeybinds.arrowHorizontal;
+    };
+
     const customKeybinds = opts.keybinds || {};
-    const vim = opts.navigation === "vi" ? ListKeybinds.vim : {};
-    const arrow = opts.navigation === "arrows" ? ListKeybinds.arrow : {};
+    const vim = getVim();
+    const arrow = getArrow();
     const config = { ...customKeybinds, ...vim, ...arrow };
 
     const { onEvent } = useKeybinds<
-        | typeof ListKeybinds.vim
-        | typeof ListKeybinds.arrow
+        | typeof ListKeybinds.vimVertical
+        | typeof ListKeybinds.vimHorizontal
+        | typeof ListKeybinds.arrowVertical
+        | typeof ListKeybinds.arrowHorizontal
         | typeof customKeybinds
     >(config as any);
 

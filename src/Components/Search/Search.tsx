@@ -68,8 +68,6 @@ export function Search({ wordList, goToIdx, idx }: Props): React.ReactNode {
     }
 
     function onEnter(stdin: string) {
-        console.log("entering...");
-
         text.clearText();
         if (stdin === "/" && state.direction !== "FORWARD") {
             return setState({ ...state, direction: "FORWARD" });

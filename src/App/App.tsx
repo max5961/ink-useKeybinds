@@ -3,7 +3,8 @@ import { initialItems, Item, keybinds } from "./initialData.js";
 import useList from "../Components/List/useList.js";
 import { OnEvent } from "../use-keybinds/useKeybinds.js";
 import { Box, Text, useApp } from "ink";
-import { List, useIsFocus, useOnItem } from "../Components/List/List.js";
+import { List } from "../Components/List/List.js";
+import { useIsFocus, useOnItem } from "../Components/List/ListItem.js";
 import { useOnEvent } from "../use-keybinds/KeybindsProvider.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
 import { Input } from "../Components/Input/Input.js";
@@ -19,19 +20,20 @@ export default function App(): React.ReactNode {
         keybinds,
         windowSize: 7,
         navigation: "vi",
-        centerScroll: true,
-        circular: true,
+        centerScroll: false,
+        circular: false,
+        vertical: true,
     });
 
     const onEvent = useOnEvent<typeof keybinds>();
     const onCmd = useOnCmd();
 
     onCmd("foo", () => {
-        setShoutout("Ayoooo shoutout is fooo!!!");
+        setShoutout("foo shoutout");
     });
 
     onCmd("bar", () => {
-        setShoutout("Shoutout to bar");
+        setShoutout("bar shoutout");
     });
 
     onEvent("expand", () => {
@@ -99,6 +101,7 @@ export default function App(): React.ReactNode {
                     viewState={viewState}
                     wordList={wordList}
                     scrollBar={true}
+                    scrollBarPosition="post"
                     scrollColor="blue"
                 />
             </Box>
