@@ -82,9 +82,8 @@ CommandLine.Prompt = function Prompt(): React.ReactNode {
 
         const cmd = commands[text.str];
 
-        if (cmd) {
-            cmd();
-        } else if (text.str in commands) {
+        if (text.str in commands) {
+            typeof cmd === "function" && cmd();
             EMITTER.emit(text.str);
         } else {
             text.setText(`command not found: ${text.str}`);

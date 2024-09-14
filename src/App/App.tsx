@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { initialItems, Item, keybinds } from "./initialData.js";
 import useList from "../Components/List/useList.js";
-import { OnEvent } from "../use-keybinds/useKeybinds.js";
+import { OnItem } from "../use-keybinds/useKeybinds.js";
 import { Box, Text, useApp } from "ink";
 import { List } from "../Components/List/List.js";
-import { useIsFocus, useOnItem } from "../Components/List/ListItem.js";
+import { useItem } from "../Components/List/ListItem.js";
 import { useOnEvent } from "../use-keybinds/KeybindsProvider.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
 import { Input } from "../Components/Input/Input.js";
@@ -16,12 +16,12 @@ export default function App(): React.ReactNode {
     const [exp, setExp] = useState(true);
     const { exit } = useApp();
 
-    const { viewState, util } = useList(items.length, {
+    const { viewState, util } = useList(items, {
         keybinds,
-        windowSize: 3,
+        windowSize: 5,
         navigation: "vi",
-        centerScroll: false,
-        circular: false,
+        centerScroll: true,
+        circular: true,
         vertical: true,
     });
 
@@ -53,35 +53,38 @@ export default function App(): React.ReactNode {
         exit();
     });
 
-    const itemGen = items.map((desc, idx) => {
-        return (isFocus: boolean, onItem: OnEvent<typeof keybinds>) => {
-            onItem("deleteItem", () => {
-                const copy = items.slice();
-                copy.splice(idx, 1);
-                setItems(copy);
-            });
-
-            onItem("toggleDone", () => {
-                const copy = items.slice();
-                copy[idx] = {
-                    ...copy[idx],
-                    completed: !copy[idx].completed,
-                };
-                setItems(copy);
-            });
-
-            onItem("updateShoutout", () => {
-                setShoutout(desc.id.slice(0, 5));
-            });
-
+    let i = 0;
+    const itemGens = items.map((desc, idx) => {
+        if (++i % 2 === 0) {
             return (
                 <ListItem
                     key={desc.id}
-                    {...{ items, setItems, idx, isFocus }}
+                    setItems={setItems}
+                    setShoutout={setShoutout}
+                />
+            );
+        }
+
+        return (isFocus: boolean, onItem: OnItem<typeof keybinds>) => {
+            return (
+                <ListItem
+                    key={desc.id}
+                    setItems={setItems}
+                    setShoutout={setShoutout}
                 />
             );
         };
     });
+
+    // const itemGens = items.map((desc, idx) => {
+    //     return (
+    //         <ListItem
+    //             key={desc.id}
+    //             setItems={setItems}
+    //             setShoutout={setShoutout}
+    //         />
+    //     );
+    // });
 
     const wordList = items.map((i) => i.name);
 
@@ -97,7 +100,7 @@ export default function App(): React.ReactNode {
             <Text>{`Last shoutout was: ${shoutout}`}</Text>
             <Box borderStyle="round" width={50} borderColor="gray">
                 <List
-                    itemGenerators={itemGen}
+                    items={itemGens}
                     viewState={viewState}
                     wordList={wordList}
                     scrollBar={true}
@@ -111,25 +114,47 @@ export default function App(): React.ReactNode {
 }
 
 type LIProps = {
-    items: Item[];
     setItems: (items: Item[]) => void;
-    isFocus: boolean;
-    idx: number;
+    setShoutout: (s: string) => void;
 };
 
-function ListItem({ isFocus, items, idx, setItems }: LIProps): React.ReactNode {
-    const item = items[idx];
+function ListItem({ setItems, setShoutout }: LIProps): React.ReactNode {
+    const { onItem, isFocus, index, items } = useItem<
+        typeof keybinds,
+        Item[]
+    >();
+
+    onItem("deleteItem", () => {
+        const copy = items.slice();
+        copy.splice(index, 1);
+        setItems(copy);
+    });
+
+    onItem("toggleDone", () => {
+        const copy = items.slice();
+        copy[index] = {
+            ...copy[index],
+            completed: !copy[index].completed,
+        };
+        setItems(copy);
+    });
+
+    onItem("updateShoutout", () => {
+        setShoutout(items[index].id.slice(0, 5));
+    });
+
+    const item = items[index];
 
     const text = useFormInput({
         enter: { input: "i" },
-        exit: { key: "esc" },
+        exit: { key: "return" },
         defaultVal: item.name,
         active: isFocus,
     });
 
     function onSubmit() {
         const copy = items.slice();
-        copy[idx] = { ...item, name: text.str };
+        copy[index] = { ...item, name: text.str };
         setItems(copy);
     }
 
@@ -155,16 +180,15 @@ function ListItem({ isFocus, items, idx, setItems }: LIProps): React.ReactNode {
 function NestedListItem(): React.ReactNode {
     const [state, setState] = useState<number>(0);
 
-    const onCmd = useOnItem<typeof keybinds>();
-    const isFocus = useIsFocus();
+    const { onItem, isFocus } = useItem<typeof keybinds>();
 
     const color = isFocus ? "blue" : "";
 
-    onCmd("incSubCount", () => {
+    onItem("incSubCount", () => {
         setState(state + 1);
     });
 
-    onCmd("decSubCount", () => {
+    onItem("decSubCount", () => {
         setState(state - 1);
     });
 

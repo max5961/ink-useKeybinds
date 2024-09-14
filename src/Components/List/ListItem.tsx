@@ -1,50 +1,50 @@
 import React, { createContext, useContext } from "react";
 import { Box } from "ink";
-import { KeyBinds } from "../../use-keybinds/useKeybinds.js";
-import { OnEvent } from "../../use-keybinds/useKeybinds.js";
+import { KeyBinds, OnItem } from "../../use-keybinds/useKeybinds.js";
 import EventEmitter from "events";
 import assert from "assert";
 
 type LIProps<T extends KeyBinds = any> = React.PropsWithChildren & {
     isFocus: boolean;
-    onItem: OnEvent<T>;
+    onItem: OnItem<T>;
     emitter: EventEmitter;
     isHidden: boolean;
     maintainState: boolean;
+    index: number;
+    items: any;
 };
 
-type LIContext<T extends KeyBinds = any> = {
-    onItem: OnEvent<T>;
+type ListItemContext<
+    KeyBindsType extends KeyBinds = any,
+    ItemsType extends any[] = any,
+> = {
+    onItem: OnItem<KeyBindsType>;
+    items: ItemsType;
     isFocus: boolean;
     emitter: EventEmitter;
+    index: number;
 };
 
-const ListItemContext = createContext<LIContext | null>(null);
+const ListItemContext = createContext<ListItemContext | null>(null);
 
-export function ListItem<T extends KeyBinds = any>({
+export function ListItem<T extends KeyBinds = any, U extends any[] = any>({
     children,
     onItem,
-    emitter,
+    items,
     isFocus,
+    emitter,
+    index,
     isHidden,
     maintainState,
-}: LIProps<T>): React.ReactNode {
-    const hidden = isHidden && maintainState && (
-        <Box height={0} width={0} overflow="hidden">
-            {children}
-        </Box>
-    );
-
-    const mounted = !isHidden && <Box>{children}</Box>;
-
-    const unmounted = isHidden && !maintainState && null;
-
+}: LIProps): React.ReactNode {
     return (
         <ListItemContext.Provider
             value={{
                 isFocus,
                 onItem,
                 emitter,
+                index,
+                items,
             }}
         >
             {isHidden && maintainState ? (
@@ -56,35 +56,21 @@ export function ListItem<T extends KeyBinds = any>({
             ) : null}
         </ListItemContext.Provider>
     );
-
-    // return (
-    //     <ListItemContext.Provider
-    //         value={{
-    //             isFocus,
-    //             onItem,
-    //             emitter,
-    //         }}
-    //     >
-    //         {isHidden && maintainState ? (
-    //             <Box height={0} width={0} overflow="hidden">
-    //                 {children}
-    //             </Box>
-    //         ) : (
-    //             <Box>{children}</Box>
-    //         )}
-    //     </ListItemContext.Provider>
-    // );
 }
 
 const errMsg = (hook: string) => {
     return `It appears you are attempting to use the ${hook} hook outside the context of a List component (http://github.com/max5961/ink-list)`;
 };
-export function useListItemContext(): LIContext {
+export function useItem<
+    KeyBindsType extends KeyBinds = any,
+    ItemsType extends any[] = any,
+>(): ListItemContext<KeyBindsType, ItemsType> {
     const context = useContext(ListItemContext);
-    assert(context, errMsg("useListItemContext"));
+    assert(context, errMsg("useItem"));
+    // return { onItem: context.onItem<T>, }
     return context;
 }
-export function useOnItem<T extends KeyBinds = any>(): OnEvent<T> {
+export function useOnItem<T extends KeyBinds = any>(): OnItem<T> {
     const context = useContext(ListItemContext);
     assert(context, errMsg("useOnItem"));
     return context.onItem;

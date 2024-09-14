@@ -1,52 +1,60 @@
 import { Box } from "ink";
 import React, { PropsWithChildren } from "react";
-import { Binding } from "../../use-keybinds/useKeybinds.js";
-import { Page } from "./Page.js";
+import { List } from "../List/List.js";
+import useList from "../List/useList.js";
 
 type Props = PropsWithChildren & {
-    nextPageKeys?: Binding | Binding[];
-    prevPageKeys?: Binding | Binding[];
-    maintainState?: boolean;
+    pages: React.ReactNode[];
+    pageState: any;
 };
 
-export function Pages({
-    nextPageKeys,
-    prevPageKeys,
-    maintainState,
-    children,
-}: Props): React.ReactNode {
-    const generated = React.Children.map(children, (child) => {
-        return <Page>{child}</Page>;
-    });
-
+export function Pages({ pages, pageState }: Props): React.ReactNode {
     return (
         <Box width="100%" height="100%">
-            {generated}
+            <List items={pages} viewState={pageState} />
         </Box>
     );
 }
 
-function Layout({ children }: PropsWithChildren): React.ReactNode {
-    // <LayoutContext.Provider value={{}}>
-    // </LayoutContext.Provider value={{}}>
-    return null;
+export function usePages(pages) {
+    const { viewState, util } = useList(pages, { navigation: "none" });
+
+    const pageName =
+        (pages[util.currentIndex] as React.ReactElement)?.props?.pageName ||
+        null;
+
+    const pageUtil = {
+        nextPage: util.nextItem,
+        prevPage: util.prevItem,
+        goToPage: util.goToIndex,
+        currentPage: util.currentIndex,
+        currentPageName: pageName,
+    };
+
+    return { pageState: viewState, util: pageUtil };
 }
 
-function Foo(): React.ReactNode {
-    return (
-        <Pages>
-            <Layout>
-                <Box flexDirection="row">
-                    <Box flexGrow={1} height="100%">
-                        <Page></Page>
-                    </Box>
-                    <Box flexGrow={1} height="100%">
-                        <Page></Page>
-                    </Box>
-                </Box>
-            </Layout>
-            <Page></Page>
-            <Page></Page>
-        </Pages>
-    );
-}
+// function Layout({ children }: PropsWithChildren): React.ReactNode {
+//     // <LayoutContext.Provider value={{}}>
+//     // </LayoutContext.Provider value={{}}>
+//     return null;
+// }
+
+// function Foo(): React.ReactNode {
+//     return (
+//         <Pages >
+//             <Layout>
+//                 <Box flexDirection="row">
+//                     <Box flexGrow={1} height="100%">
+//                         <Page></Page>
+//                     </Box>
+//                     <Box flexGrow={1} height="100%">
+//                         <Page></Page>
+//                     </Box>
+//                 </Box>
+//             </Layout>
+//             <Page></Page>
+//             <Page></Page>
+//         </Pages>
+//     );
+// }

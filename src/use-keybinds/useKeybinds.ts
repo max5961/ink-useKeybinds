@@ -172,6 +172,9 @@ export interface OnEventGenerator<T extends KeyBinds = any> {
     (unsubscriberList: (() => void)[]): OnEvent<T>;
 }
 
+export type OnItem<T extends KeyBinds = any> = OnEvent<T>;
+export type OnPage<T extends KeyBinds = any> = OnEvent<T>;
+
 /* union type of the keys of an object but excludes possible number types that
  * aren't compatible with types that expect strings */
 export type WONums<T extends object> = T extends object

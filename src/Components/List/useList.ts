@@ -31,6 +31,7 @@ export type ViewState = Readonly<{
     _itemsLen: number;
     _emitter: EventEmitter;
     _util: ListUtil;
+    _items: any[];
 }>;
 
 export type ListUtil = {
@@ -43,7 +44,7 @@ export type ListUtil = {
 };
 
 export default function useList(
-    itemsLength: number,
+    items: unknown[],
     opts: Opts = {},
 ): { viewState: ViewState; util: ListUtil } {
     /* Set defaults for opts not provided */
@@ -66,14 +67,14 @@ export default function useList(
         start: 0,
 
         /* The index AFTER the last element within the viewing window */
-        end: Math.min(opts.windowSize || itemsLength, itemsLength),
+        end: Math.min(opts.windowSize || items.length, items.length),
 
         /* This can only be modified through the modifyWinSize function in
          * order to keep the scrolling functions simple */
-        _winSize: opts.windowSize || itemsLength,
+        _winSize: opts.windowSize || items.length,
     });
 
-    const LENGTH = itemsLength;
+    const LENGTH = items.length;
     const WINDOW_SIZE = Math.min(state._winSize ?? LENGTH, LENGTH);
 
     const init = {
@@ -184,6 +185,7 @@ export default function useList(
         _itemsLen: LENGTH,
         _emitter: emitter,
         _util: util,
+        _items: items,
     });
 
     return {

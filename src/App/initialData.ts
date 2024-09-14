@@ -29,15 +29,9 @@ export const initialItems: Item[] = [
 ];
 
 export const keybinds = {
-    increment: [{ input: "j" }, { key: "down" }, { key: "tab" }],
-    decrement: [{ input: "k" }, { key: "up" }],
-    goToTop: { input: "gg" },
-    goToBottom: { input: "G" },
-    goToMiddle: { input: "M" },
     toggleDone: { key: "return" },
     updateShoutout: [{ input: " s" }, { input: " o" }],
     deleteItem: { input: "dd" },
-    toggleWhichList: { input: "ll" },
     windowSize0: { input: "w0" },
     windowSizeMax: { input: "wm" },
     incSubCount: { input: "l" },

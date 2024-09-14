@@ -5,14 +5,15 @@ import { KeyBinds, OnEvent } from "../../use-keybinds/useKeybinds.js";
 import { ViewState } from "./useList.js";
 import { Search } from "../Search/Search.js";
 import { ListItem } from "./ListItem.js";
+import { isRenderable } from "./isRenderable.js";
 
 interface ItemGen<T extends KeyBinds = any> {
     (isFocus: boolean, onItem: OnEvent<T>): React.ReactNode;
 }
 
 type Props<T extends KeyBinds = any> = {
-    itemGenerators: ItemGen<T>[];
     viewState: ViewState;
+    items: (ItemGen<T> | React.ReactNode)[];
     scrollBar?: boolean;
     scrollColor?: string;
     scrollBarPosition?: "pre" | "post";
@@ -22,7 +23,7 @@ type Props<T extends KeyBinds = any> = {
 };
 
 export function List<T extends KeyBinds = any>({
-    itemGenerators,
+    items,
     viewState,
     wordList,
     scrollBar = true,
@@ -36,9 +37,9 @@ export function List<T extends KeyBinds = any>({
         width: 0,
     });
 
-    const generatedItems: ReactNode[] = itemGenerators
+    const generatedItems = items
         // Create the nodes
-        .map((item: ItemGen, idx: number) => {
+        .map((item: ItemGen | React.ReactNode, idx: number) => {
             const onItem: OnEvent<T> = (...args: Parameters<OnEvent>) => {
                 if (idx !== viewState._idx) return;
 
@@ -49,20 +50,27 @@ export function List<T extends KeyBinds = any>({
                 viewState._emitter.on(args[0], args[1]);
             };
 
-            const node = item(idx === viewState._idx, onItem);
+            const node = isRenderable(item)
+                ? item
+                : (item as ItemGen<T>)(idx === viewState._idx, onItem);
+
             const key = (node as React.ReactElement).key;
             const isHidden = idx < viewState._start || idx >= viewState._end;
 
             return (
                 <ListItem
                     key={key}
-                    onItem={onItem}
-                    isFocus={idx === viewState._idx}
-                    emitter={viewState._emitter}
                     isHidden={isHidden}
                     maintainState={maintainState}
+                    /* context */
+                    onItem={onItem}
+                    isFocus={idx === viewState._idx}
+                    index={idx}
+                    items={viewState._items}
+                    emitter={viewState._emitter}
+                    /* context */
                 >
-                    {node}
+                    {node as React.ReactNode}
                 </ListItem>
             );
         });
@@ -77,7 +85,7 @@ export function List<T extends KeyBinds = any>({
             const { width, height } = measureElement(ref.current as any);
             setHw({ height, width });
         }
-    }, [itemGenerators, viewState]);
+    }, [items, viewState]);
 
     const scrollBarPre = scrollBarPosition === "pre" && (
         <ScrollBar

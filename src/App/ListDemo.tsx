@@ -16,7 +16,7 @@ function App(): React.ReactNode {
     const [exp, setExp] = useState(true);
     const { exit } = useApp();
 
-    const { viewState, util } = useList(items.length, {
+    const { viewState, util } = useList(items, {
         keybinds,
         windowSize: 7,
         navigation: "vi",
@@ -53,7 +53,7 @@ function App(): React.ReactNode {
         exit();
     });
 
-    const itemGen = items.map((desc, idx) => {
+    const list = items.map((desc, idx) => {
         return (isFocus: boolean, onItem: OnEvent<typeof keybinds>) => {
             onItem("deleteItem", () => {
                 const copy = items.slice();
@@ -97,7 +97,7 @@ function App(): React.ReactNode {
             <Text>{`Last shoutout was: ${shoutout}`}</Text>
             <Box borderStyle="round" width={50} borderColor="gray">
                 <List
-                    itemGenerators={itemGen}
+                    items={list}
                     viewState={viewState}
                     wordList={wordList}
                     scrollBar={true}
