@@ -7,7 +7,7 @@ import { Search } from "../Search/Search.js";
 import { ListItem } from "./ListItem.js";
 import { isRenderable } from "./isRenderable.js";
 
-interface ItemGen<T extends KeyBinds = any> {
+export interface ItemGen<T extends KeyBinds = any> {
     (isFocus: boolean, onItem: OnEvent<T>): React.ReactNode;
 }
 
