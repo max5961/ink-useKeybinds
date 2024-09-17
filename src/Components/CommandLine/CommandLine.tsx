@@ -12,12 +12,14 @@ import { useFormInput } from "../Input/useFormInput.js";
 import { KEYCODES } from "../../use-keybinds/Keycodes.js";
 import EventEmitter from "events";
 import assert from "assert";
+import { usePage } from "../Sequence/SequenceUnit/PageContext.js";
 
 type UnsubscribeList = (() => void)[];
 
 type CommandLineContext = {
     onCmdGenerator: (
         unsubscribeList: UnsubscribeList,
+        isPageFocus: boolean,
     ) => (cmd: string, handler: () => unknown) => void;
     EMITTER: EventEmitter;
     commands: Commands;
@@ -38,11 +40,16 @@ export function CommandLine({
     const [EMITTER] = useState(new EventEmitter());
 
     const onCmdGenerator = useCallback(
-        (unsubscribeList: UnsubscribeList) =>
+        (unsubscribeList: UnsubscribeList, isPageFocus: boolean) =>
             (cmd: string, handler: () => unknown) => {
-                EMITTER.on(cmd, handler);
+                const handlerWrapper = () => {
+                    if (!isPageFocus) return;
+                    handler();
+                };
+
+                EMITTER.on(cmd, handlerWrapper);
                 unsubscribeList.push(() => {
-                    EMITTER.removeListener(cmd, handler);
+                    EMITTER.removeListener(cmd, handlerWrapper);
                 });
             },
         [],
@@ -109,13 +116,19 @@ export function useOnCmd() {
         "Trying to use CommandLineContext outside of Command component",
     );
 
+    let isPageFocus = true;
+    try {
+        const pageCtx = usePage();
+        isPageFocus = pageCtx.isFocus;
+    } catch (_) {}
+
     const unsubscribeList = useRef<UnsubscribeList>([]);
 
     unsubscribeList.current.forEach((unsub) => {
         unsub();
     });
 
-    const onCmd = context.onCmdGenerator(unsubscribeList.current);
+    const onCmd = context.onCmdGenerator(unsubscribeList.current, isPageFocus);
 
     return onCmd;
 }
