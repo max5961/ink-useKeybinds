@@ -42,7 +42,7 @@ export function KeybindsProvider({
     );
 }
 
-export function useOnEvent<T extends KeyBinds = any>(): OnEvent<T> {
+export function useOnApp<T extends KeyBinds = any>(): OnEvent<T> {
     const context = useContext(KeybindsProviderContext);
     assert(
         context,
@@ -60,7 +60,7 @@ export function useOnEvent<T extends KeyBinds = any>(): OnEvent<T> {
         unsubscriber();
     });
 
-    const onEvent = onEventGenerator(unsubscribers.current);
+    const onApp = onEventGenerator(unsubscribers.current);
 
-    return onEvent;
+    return onApp;
 }

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import useList from "../Components/List/useList.js";
 import { initialItems, keybinds, Item } from "./initialData.js";
 import { useApp, Box, Text } from "ink";
-import { useOnEvent } from "../use-keybinds/KeybindsProvider.js";
+import { useOnApp } from "../use-keybinds/KeybindsProvider.js";
 import { useOnCmd } from "../Components/CommandLine/CommandLine.js";
 import { List } from "../Components/List/List.js";
-import { useItem } from "../Components/List/ListItem.js";
+import { useItem } from "../Components/Sequence/SequenceUnit/ItemContext.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
 import { Input } from "../Components/Input/Input.js";
 import { OnItem } from "../use-keybinds/useKeybinds.js";
+import { useList } from "../Components/List/useList.js";
 
 export default function PageOne(): React.ReactNode {
     const [items, setItems] = useState(initialItems);
@@ -16,7 +16,7 @@ export default function PageOne(): React.ReactNode {
     const [exp, setExp] = useState(true);
     const { exit } = useApp();
 
-    const { viewState, util } = useList(items, {
+    const { listState, listUtil } = useList(items, {
         keybinds,
         windowSize: 5,
         navigation: "vi",
@@ -25,7 +25,7 @@ export default function PageOne(): React.ReactNode {
         vertical: true,
     });
 
-    const onEvent = useOnEvent<typeof keybinds>();
+    const onApp = useOnApp<typeof keybinds>();
     const onCmd = useOnCmd();
 
     onCmd("foo", () => {
@@ -36,20 +36,20 @@ export default function PageOne(): React.ReactNode {
         setShoutout("bar shoutout");
     });
 
-    onEvent("expand", () => {
+    onApp("expand", () => {
         if (exp) {
-            util.modifyWinSize(1);
+            listUtil.modifyWinSize(1);
         } else {
-            util.modifyWinSize(Infinity);
+            listUtil.modifyWinSize(Infinity);
         }
         setExp(!exp);
     });
 
-    onEvent("windowSize0", () => {
-        util.modifyWinSize(0);
+    onApp("windowSize0", () => {
+        listUtil.modifyWinSize(0);
     });
 
-    onEvent("quit", () => {
+    onApp("quit", () => {
         exit();
     });
 
@@ -76,32 +76,24 @@ export default function PageOne(): React.ReactNode {
         };
     });
 
-    // const itemGens = items.map((desc, idx) => {
-    //     return (
-    //         <ListItem
-    //             key={desc.id}
-    //             setItems={setItems}
-    //             setShoutout={setShoutout}
-    //         />
-    //     );
-    // });
-
     const wordList = items.map((i) => i.name);
 
     return (
         <Box
-            width="100"
-            height="100"
+            width="100%"
+            height={25}
             display="flex"
             flexDirection="column"
             justifyContent="center"
             alignItems="center"
+            borderStyle="bold"
+            borderColor="red"
         >
             <Text>{`Last shoutout was: ${shoutout}`}</Text>
             <Box borderStyle="round" width={50} borderColor="gray">
                 <List
                     items={itemGens}
-                    viewState={viewState}
+                    listState={listState}
                     wordList={wordList}
                     scrollBar={true}
                     scrollBarPosition="post"

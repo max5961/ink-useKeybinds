@@ -1,6 +1,9 @@
-import { HookState, Opts } from "./useList.js";
+import { UseSequenceTypes } from "../useSequence.js";
 import { produce } from "immer";
 import { shallowEqualObjects } from "shallow-equal";
+
+type HookState = UseSequenceTypes.HookState;
+type Opts = UseSequenceTypes.Opts;
 
 type Init = {
     state: HookState;

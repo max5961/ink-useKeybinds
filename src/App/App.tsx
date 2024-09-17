@@ -1,9 +1,12 @@
-import { Box, Text } from "ink";
 import React from "react";
 import PageOne from "./PageOne.js";
 import PageTwo from "./PageTwo.js";
-import { usePages, Pages } from "../Components/Pages/Pages.js";
+import { useWindow } from "../Components/Window/useWindow.js";
+import { Window } from "../Components/Window/Window.js";
 import { KeyBinds, useKeybinds } from "../use-keybinds/useKeybinds.js";
+import { Box } from "ink";
+
+const pages = [<PageOne key="PageOne" />, <PageTwo key="PageTwo" />];
 
 const pageNav = {
     pageOne: { input: "1" },
@@ -11,28 +14,21 @@ const pageNav = {
 } satisfies KeyBinds;
 
 export default function App(): React.ReactNode {
-    const pages = [<PageOne key="Page One" />, <PageTwo key="Page Two" />];
-
-    const { pageState, pageUtil } = usePages(pages, {});
+    const { windowState, windowUtil } = useWindow(pages);
 
     const { onEvent } = useKeybinds(pageNav);
 
     onEvent("pageOne", () => {
-        pageUtil.goToPage(0);
+        windowUtil.goToPage(0);
     });
 
     onEvent("pageTwo", () => {
-        pageUtil.goToPage(1);
+        windowUtil.goToPage(1);
     });
 
-    const pageName = pageUtil.currentPage === 0 ? "Page One" : "Page Two";
-
     return (
-        <Box height={25} width={75} borderStyle="round">
-            <Pages pageState={pageState} pages={pages} />
-            <Text>{pageName}</Text>
+        <Box height={30} width={75} borderStyle="bold" borderColor="blue">
+            <Window pages={pages} windowState={windowState} />
         </Box>
     );
 }
-
-console.log("listening...\n");

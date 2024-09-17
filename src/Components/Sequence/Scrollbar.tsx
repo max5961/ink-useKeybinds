@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { ViewState } from "./useList.js";
+import { UseSequenceTypes } from "./useSequence.js";
 
-type SBProps = {
-    viewState: ViewState;
+type Props = {
+    viewState: UseSequenceTypes.ViewState;
     height: number;
     width: number;
     color: string;
@@ -14,7 +14,7 @@ function ScrollBar({
     height,
     width,
     color,
-}: SBProps): React.ReactNode {
+}: Props): React.ReactNode {
     const { _start, _end, _winSize, _itemsLen } = viewState;
 
     if (!_itemsLen || _winSize >= _itemsLen) return null;

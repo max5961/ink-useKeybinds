@@ -8,6 +8,8 @@ import {
 import { KEYCODES, Key } from "../../use-keybinds/Keycodes.js";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
+import { usePage } from "../Sequence/SequenceUnit/PageContext.js";
+import { Priority } from "../../use-keybinds/KeybindProcessingGate.js";
 
 const kb = {
     return: { key: "return" },
@@ -101,10 +103,16 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     } satisfies KeyBinds;
     insertKb[EXIT_ID] = EXIT;
 
-    const priority = (() => {
-        if (!ACTIVE) {
-            return "never";
-        }
+    let isPageFocus = true;
+    try {
+        const pageCtx = usePage();
+        isPageFocus = pageCtx.isFocus;
+    } catch (_) {}
+
+    const priority = ((): Priority => {
+        if (!ACTIVE) return "never";
+        if (!isPageFocus) return "never";
+
         return state.insert ? "textinput" : "default";
     })();
     const config = state.insert ? insertKb : normalKb;

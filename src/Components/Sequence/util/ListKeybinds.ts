@@ -1,4 +1,4 @@
-import { KeyBinds } from "../../use-keybinds/useKeybinds.js";
+import { KeyBinds } from "../../../use-keybinds/useKeybinds.js";
 
 const arrowVertical = {
     increment: [{ key: "down" }, { key: "tab" }],

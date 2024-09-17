@@ -7,4 +7,4 @@ export { useFormInput } from "./Components/Input/useFormInput.js";
 export { KeybindProcessingGate } from "./use-keybinds/KeybindProcessingGate.js";
 export { useKeybinds } from "./use-keybinds/useKeybinds.js";
 // prettier-ignore
-export { KeybindsProvider, useOnEvent } from "./use-keybinds/KeybindsProvider.js";
+export { KeybindsProvider, useOnApp } from "./use-keybinds/KeybindsProvider.js";
