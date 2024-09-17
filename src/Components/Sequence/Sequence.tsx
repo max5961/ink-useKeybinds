@@ -46,7 +46,7 @@ export function Sequence<T extends KeyBinds = any>({
     scrollBarPosition = "post",
     vertical = true,
     maintainState = true,
-}): ReactNode {
+}: SequenceTypes.Props): ReactNode {
     const [hw, setHw] = useState<{ height: number; width: number }>({
         height: 0,
         width: 0,
@@ -133,8 +133,10 @@ export function Sequence<T extends KeyBinds = any>({
         />
     );
 
+    const height = type === "PAGES" ? "100%" : undefined;
+
     const verticalList = vertical && (
-        <Box flexDirection="column" width="100%">
+        <Box flexDirection="column" height="100%" width="100%">
             <Box
                 flexDirection="row"
                 justifyContent="space-between"
@@ -153,7 +155,7 @@ export function Sequence<T extends KeyBinds = any>({
     );
 
     const horizontalList = !vertical && (
-        <Box flexDirection="row" height="100%">
+        <Box flexDirection="row" height="100%" width="100%">
             <Box
                 flexDirection="column"
                 justifyContent="space-between"

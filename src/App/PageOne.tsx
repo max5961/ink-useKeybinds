@@ -75,17 +75,17 @@ export default function PageOne(): React.ReactNode {
 
     return (
         <Box
+            height="100%"
             width="100%"
-            height={25}
             display="flex"
             flexDirection="column"
             justifyContent="center"
             alignItems="center"
-            borderStyle="bold"
+            borderStyle="round"
             borderColor="red"
         >
             <Text>{`Last shoutout was: ${shoutout}`}</Text>
-            <Box borderStyle="round" width={50} borderColor="gray">
+            <Box borderStyle="round" borderColor="white" width={50}>
                 <List
                     items={itemGens}
                     listState={listState}

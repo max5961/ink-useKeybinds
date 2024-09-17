@@ -21,9 +21,5 @@ export function List<T extends KeyBinds = any>(props: Props<T>): ReactNode {
         scrollBarPosition: props.scrollBarPosition ?? "post",
     } satisfies SequenceTypes.Props;
 
-    return (
-        <Box width="100%" height="100%" borderStyle="bold" borderColor="yellow">
-            <Sequence {...sequenceProps} />
-        </Box>
-    );
+    return <Sequence {...sequenceProps} />;
 }

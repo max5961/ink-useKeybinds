@@ -28,6 +28,8 @@ export function SequenceUnit({
     isHidden,
     maintainState,
 }: Props): React.ReactNode {
+    const dim = type === "PAGES" ? "100%" : undefined;
+
     const getUnits = () => {
         return (
             <>
@@ -36,7 +38,9 @@ export function SequenceUnit({
                         {children}
                     </Box>
                 ) : !isHidden ? (
-                    <Box>{children}</Box>
+                    <Box height={dim} width={dim}>
+                        {children}
+                    </Box>
                 ) : null}
             </>
         );

@@ -14,14 +14,12 @@ const commands = {
 render(
     <KeybindProcessingGate>
         <KeybindsProvider config={keybinds}>
-            <CommandLine {...{ commands }}>
+            <CommandLine commands={commands}>
                 <Box
                     width="100"
-                    height="100"
+                    height={40}
                     display="flex"
                     flexDirection="column"
-                    justifyContent="space-between"
-                    alignItems="center"
                     borderStyle="round"
                 >
                     <App />

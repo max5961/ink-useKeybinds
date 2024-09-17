@@ -13,12 +13,14 @@ const pages = [<PageOne key="PageOne" />, <PageTwo key="PageTwo" />];
 const pageNav = {
     pageOne: { input: "1" },
     pageTwo: { input: "2" },
+    nextPage: { key: "right" },
+    prevPage: { key: "left" },
 } satisfies KeyBinds;
 
 export default function App(): React.ReactNode {
-    const { windowState, windowUtil } = useWindow(pages);
     const { exit } = useApp();
 
+    const { windowState, windowUtil } = useWindow(pages, { circular: true });
     const { onEvent } = useKeybinds(pageNav);
     const { onApp } = useOnApp<typeof keybinds>();
 
@@ -30,13 +32,17 @@ export default function App(): React.ReactNode {
         windowUtil.goToPage(1);
     });
 
+    onEvent("nextPage", () => {
+        windowUtil.nextPage();
+    });
+
+    onEvent("prevPage", () => {
+        windowUtil.prevPage();
+    });
+
     onApp("quit", () => {
         exit();
     });
 
-    return (
-        <Box height={30} width={75} borderStyle="bold" borderColor="blue">
-            <Window pages={pages} windowState={windowState} />
-        </Box>
-    );
+    return <Window pages={pages} windowState={windowState} />;
 }

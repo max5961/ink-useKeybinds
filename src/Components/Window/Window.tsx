@@ -1,6 +1,6 @@
-import { Box } from "ink";
 import React from "react";
 import { SequenceTypes, Sequence } from "../Sequence/Sequence.js";
+import { Box } from "ink";
 
 type Props = Omit<
     SequenceTypes.Props,
@@ -18,18 +18,9 @@ export function Window(props: Props): React.ReactNode {
         scrollBar: props.scrollBar ?? false,
         scrollColor: props.scrollColor ?? "white",
         scrollBarPosition: props.scrollBarPosition ?? "post",
-        vertical: props.vertical ?? false,
+        vertical: props.vertical ?? true,
         wordList: undefined,
     } satisfies SequenceTypes.Props;
 
-    return (
-        <Box
-            width="100%"
-            height="100%"
-            borderStyle="bold"
-            borderColor="magenta"
-        >
-            <Sequence {...sequenceProps} />
-        </Box>
-    );
+    return <Sequence {...sequenceProps} />;
 }
