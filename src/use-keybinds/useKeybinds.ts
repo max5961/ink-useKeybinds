@@ -4,6 +4,7 @@ import { Key } from "./Keycodes.js";
 import { EventEmitter } from "events";
 import { randomUUID } from "crypto";
 import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
+import { usePageFocus } from "../Components/Sequence/SequenceUnit/PageContext.js";
 
 type Opts = {
     /*
@@ -54,6 +55,7 @@ export function useKeybinds<T extends KeyBinds = any>(
         Register.listen();
     }
 
+    const isPageFocus = usePageFocus();
     const canProcess = ProcessingGate.canProcess(ID, PRIORITY);
 
     /*
@@ -114,7 +116,7 @@ export function useKeybinds<T extends KeyBinds = any>(
         cmd: WONums<T>,
         handler: (stdin: string) => void,
     ): any {
-        if (canProcess) {
+        if (canProcess && isPageFocus) {
             HOOK_EMITTER.on(cmd, handler);
         }
     }
@@ -125,12 +127,13 @@ export function useKeybinds<T extends KeyBinds = any>(
      * multiple responders to an event */
     function onEventGenerator<T extends KeyBinds>(
         unsubscriberList: any,
+        isPageFocus: boolean,
     ): OnEvent<T> {
         return function onEvent(
             cmd: WONums<T>,
             handler: (stdin: string) => unknown,
         ): void {
-            if (canProcess) {
+            if (canProcess && isPageFocus) {
                 HOOK_EMITTER.on(cmd, handler);
             }
             unsubscriberList.push(() => {
@@ -169,7 +172,7 @@ export interface OnEvent<T extends KeyBinds = any> {
 }
 
 export interface OnEventGenerator<T extends KeyBinds = any> {
-    (unsubscriberList: (() => void)[]): OnEvent<T>;
+    (unsubscriberList: (() => void)[], isPageFocus: boolean): OnEvent<T>;
 }
 
 export type OnItem<T extends KeyBinds = any> = OnEvent<T>;

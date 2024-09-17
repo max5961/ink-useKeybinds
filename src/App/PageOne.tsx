@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { initialItems, keybinds, Item } from "./initialData.js";
-import { useApp, Box, Text } from "ink";
+import { Box, Text } from "ink";
 import { useOnApp } from "../use-keybinds/KeybindsProvider.js";
 import { useOnCmd } from "../Components/CommandLine/CommandLine.js";
 import { List } from "../Components/List/List.js";
@@ -14,7 +14,6 @@ export default function PageOne(): React.ReactNode {
     const [items, setItems] = useState(initialItems);
     const [shoutout, setShoutout] = useState<string>("");
     const [exp, setExp] = useState(true);
-    const { exit } = useApp();
 
     const { listState, listUtil } = useList(items, {
         keybinds,
@@ -25,7 +24,7 @@ export default function PageOne(): React.ReactNode {
         vertical: true,
     });
 
-    const onApp = useOnApp<typeof keybinds>();
+    const { onApp } = useOnApp<typeof keybinds>();
     const onCmd = useOnCmd();
 
     onCmd("foo", () => {
@@ -47,10 +46,6 @@ export default function PageOne(): React.ReactNode {
 
     onApp("windowSize0", () => {
         listUtil.modifyWinSize(0);
-    });
-
-    onApp("quit", () => {
-        exit();
     });
 
     let i = 0;

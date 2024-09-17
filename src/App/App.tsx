@@ -4,7 +4,9 @@ import PageTwo from "./PageTwo.js";
 import { useWindow } from "../Components/Window/useWindow.js";
 import { Window } from "../Components/Window/Window.js";
 import { KeyBinds, useKeybinds } from "../use-keybinds/useKeybinds.js";
-import { Box } from "ink";
+import { Box, useApp } from "ink";
+import { useOnApp } from "../use-keybinds/KeybindsProvider.js";
+import { keybinds } from "./initialData.js";
 
 const pages = [<PageOne key="PageOne" />, <PageTwo key="PageTwo" />];
 
@@ -15,8 +17,10 @@ const pageNav = {
 
 export default function App(): React.ReactNode {
     const { windowState, windowUtil } = useWindow(pages);
+    const { exit } = useApp();
 
     const { onEvent } = useKeybinds(pageNav);
+    const { onApp } = useOnApp<typeof keybinds>();
 
     onEvent("pageOne", () => {
         windowUtil.goToPage(0);
@@ -24,6 +28,10 @@ export default function App(): React.ReactNode {
 
     onEvent("pageTwo", () => {
         windowUtil.goToPage(1);
+    });
+
+    onApp("quit", () => {
+        exit();
     });
 
     return (
