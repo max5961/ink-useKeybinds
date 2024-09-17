@@ -12,7 +12,7 @@ import { useFormInput } from "../Input/useFormInput.js";
 import { KEYCODES } from "../../use-keybinds/Keycodes.js";
 import EventEmitter from "events";
 import assert from "assert";
-import { usePage } from "../Sequence/SequenceUnit/PageContext.js";
+import { usePageFocus } from "../Sequence/SequenceUnit/PageContext.js";
 
 type UnsubscribeList = (() => void)[];
 
@@ -116,18 +116,13 @@ export function useOnCmd() {
         "Trying to use CommandLineContext outside of Command component",
     );
 
-    let isPageFocus = true;
-    try {
-        const pageCtx = usePage();
-        isPageFocus = pageCtx.isFocus;
-    } catch (_) {}
-
     const unsubscribeList = useRef<UnsubscribeList>([]);
 
     unsubscribeList.current.forEach((unsub) => {
         unsub();
     });
 
+    const isPageFocus = usePageFocus();
     const onCmd = context.onCmdGenerator(unsubscribeList.current, isPageFocus);
 
     return onCmd;

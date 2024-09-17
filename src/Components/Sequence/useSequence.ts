@@ -3,7 +3,7 @@ import { useState } from "react";
 import { KeyBinds, useKeybinds } from "../../use-keybinds/useKeybinds.js";
 import { ListKeybinds } from "./util/ListKeybinds.js";
 import { HandleScroll } from "./util/HandleScroll.js";
-import { usePage } from "./SequenceUnit/PageContext.js";
+import { usePageFocus } from "./SequenceUnit/PageContext.js";
 
 export namespace UseSequenceTypes {
     export type Opts = {
@@ -135,13 +135,7 @@ export function useSequence(
         | typeof customKeybinds
     >(config as any);
 
-    // This entire snippet to getPageFocus needs to be put in hook.  It needs to
-    // be used in at least 3 places
-    let isPageFocus = true;
-    try {
-        const pageCtx = usePage();
-        isPageFocus = pageCtx.isFocus;
-    } catch (_) {}
+    const isPageFocus = usePageFocus();
 
     // prettier-ignore
     const willHandle = { increment: null, decrement: null, goToTop: null, goToBottom: null, scroll_up: null, scroll_down: null};

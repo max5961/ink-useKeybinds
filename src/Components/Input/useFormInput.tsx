@@ -8,7 +8,7 @@ import {
 import { KEYCODES, Key } from "../../use-keybinds/Keycodes.js";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
-import { usePage } from "../Sequence/SequenceUnit/PageContext.js";
+import { usePageFocus } from "../Sequence/SequenceUnit/PageContext.js";
 import { Priority } from "../../use-keybinds/KeybindProcessingGate.js";
 
 const kb = {
@@ -103,12 +103,7 @@ export function useFormInput(opts?: Opts): UseFormReturn {
     } satisfies KeyBinds;
     insertKb[EXIT_ID] = EXIT;
 
-    let isPageFocus = true;
-    try {
-        const pageCtx = usePage();
-        isPageFocus = pageCtx.isFocus;
-    } catch (_) {}
-
+    const isPageFocus = usePageFocus();
     const priority = ((): Priority => {
         if (!ACTIVE) return "never";
         if (!isPageFocus) return "never";

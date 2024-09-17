@@ -24,3 +24,16 @@ export function usePage<
 
     return context;
 }
+
+/*
+ * If there is no PageContext, true is returned implying that no pages means focus
+ * is always true.  If there is PageContext, return the context value for isFocus.
+ * */
+export function usePageFocus(): boolean {
+    try {
+        const pageContext = usePage();
+        return pageContext.isFocus;
+    } catch {
+        return true;
+    }
+}
