@@ -22,8 +22,9 @@ type State = {
     chars: string;
     keys: NonAlphaKeys;
     ctrlKeys: string;
-    command: string | null;
     listening: boolean;
+    command: string | null;
+    commandSet: boolean;
 };
 
 const state: State = {
@@ -32,6 +33,7 @@ const state: State = {
     ctrlKeys: "",
     listening: false,
     command: null,
+    commandSet: false,
 };
 
 export const EVT = {
@@ -41,7 +43,7 @@ export const EVT = {
 } as const;
 
 const EMITTER = new EventEmitter();
-EMITTER.setMaxListeners(10);
+EMITTER.setMaxListeners(15);
 
 /*
  * PUBLIC
@@ -106,6 +108,13 @@ function getCharRegister(): string {
 function setCommand(command: string): void {
     state.command = command;
     state.chars = "";
+
+    // should also reset state.keys and state.ctrlKeys
+    state.keys = newKeyRegister();
+    state.ctrlKeys = "";
+
+    // OR just block config processing until the next keypress with commandSet var
+    state.commandSet = true;
 }
 
 /*
@@ -137,9 +146,15 @@ function replaceKeyRegister(mapping: NonAlphaKeys): void {
 
 /*
  * PUBLIC
- * Allows useKeybinds hooks to process their configurations
+ * Allows useKeybinds hooks to process their configurations.  If no match is found
+ * no command will be set.  However, if another configuration had previously set
+ * set a command in response to EVT.keypress then that command will not be reset.
+ * Every EVT.keypress event clears the command, but once a command is set it is
+ * immutable until the next EVT.keypress event
  * */
 function processConfig(config: KeyBinds): void {
+    if (state.commandSet) return;
+
     /* Is there a non alphanumeric keypress?  We need to know so that bindings
      * such as just "f" should not trigger ctrl + f for example. */
     const hasNonAlphaKey = Object.values(state.keys).some((b) => b);
@@ -221,6 +236,7 @@ function checkNotMatch(binding: Binding): boolean {
  * that notifies all hooks that the state has been updated
  * */
 function handleKeypress(stdin: string): void {
+    state.commandSet = false;
     state.command = null;
     state.ctrlKeys = "";
 

@@ -30,10 +30,7 @@ export function usePage<
  * is always true.  If there is PageContext, return the context value for isFocus.
  * */
 export function usePageFocus(): boolean {
-    try {
-        const pageContext = usePage();
-        return pageContext.isFocus;
-    } catch {
-        return true;
-    }
+    const pageContext = useContext(PageContext);
+    if (pageContext === null) return true;
+    return pageContext.isFocus;
 }

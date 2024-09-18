@@ -12,6 +12,7 @@ import {
 } from "./useKeybinds.js";
 import assert from "assert";
 import { usePageFocus } from "../Components/Sequence/SequenceUnit/PageContext.js";
+import { useItemFocus } from "../Components/Sequence/SequenceUnit/ItemContext.js";
 
 type KeybindsProviderContext<T extends KeyBinds = any> = {
     onEventGenerator: OnEventGenerator<T>;
@@ -62,7 +63,12 @@ export function useOnApp<T extends KeyBinds = any>(): { onApp: OnEvent<T> } {
     });
 
     const isPageFocus = usePageFocus();
-    const onApp = onEventGenerator(unsubscribers.current, isPageFocus);
+    const isItemFocus = useItemFocus();
+    const onApp = onEventGenerator(
+        unsubscribers.current,
+        isPageFocus,
+        isItemFocus,
+    );
 
     return { onApp };
 }

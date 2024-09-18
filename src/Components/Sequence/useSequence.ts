@@ -9,10 +9,13 @@ export namespace UseSequenceTypes {
     export type Opts = {
         windowSize?: number | null;
         keybinds?: KeyBinds;
-        navigation?: "none" | "vi" | "arrow";
-        scrollBar?: boolean;
+        navigation?:
+            | "none"
+            | "vi-vertical"
+            | "vi-horizontal"
+            | "arrow-vertical"
+            | "arrow-horizontal";
         centerScroll?: boolean;
-        emitter?: EventEmitter;
         circular?: boolean;
         vertical?: boolean;
     };
@@ -58,10 +61,8 @@ export function useSequence(
     /* Set defaults for opts not provided */
     opts = {
         windowSize: null,
-        scrollBar: false,
         centerScroll: false,
-        navigation: "vi",
-        emitter: new EventEmitter(),
+        navigation: "vi-vertical",
         circular: false,
         vertical: true,
         ...opts,
@@ -106,26 +107,22 @@ export function useSequence(
 
     handle();
 
-    const emitter = opts.emitter || new EventEmitter();
+    const emitter = new EventEmitter();
 
-    const getVim = () => {
-        if (opts.navigation !== "vi") return {};
-        return opts.vertical
-            ? ListKeybinds.vimVertical
-            : ListKeybinds.vimHorizontal;
-    };
-
-    const getArrow = () => {
-        if (opts.navigation !== "arrow") return {};
-        return opts.vertical
-            ? ListKeybinds.arrowVertical
-            : ListKeybinds.arrowHorizontal;
-    };
+    // prettier-ignore
+    const getNavigationKeybinds = () => {
+        switch (opts.navigation) {
+            case "vi-vertical": return ListKeybinds.vimVertical;
+            case "vi-horizontal": return ListKeybinds.vimHorizontal;
+            case "arrow-vertical": return ListKeybinds.arrowVertical;
+            case "arrow-horizontal": return ListKeybinds.arrowHorizontal;
+            default: return {};
+        }
+    }
 
     const customKeybinds = opts.keybinds || {};
-    const vim = getVim();
-    const arrow = getArrow();
-    const config = { ...customKeybinds, ...vim, ...arrow };
+    const navigationKeybinds = getNavigationKeybinds();
+    const config = { ...customKeybinds, ...navigationKeybinds };
 
     const { onEvent } = useKeybinds<
         | typeof ListKeybinds.vimVertical
@@ -144,7 +141,7 @@ export function useSequence(
             continue;
         }
 
-        onEvent(key, (stdin: string) => {
+        onEvent(key as any, (stdin: string) => {
             if (!isPageFocus) return;
 
             emitter.emit(key, stdin);

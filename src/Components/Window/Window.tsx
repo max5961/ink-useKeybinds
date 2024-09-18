@@ -1,6 +1,5 @@
 import React from "react";
 import { SequenceTypes, Sequence } from "../Sequence/Sequence.js";
-import { Box } from "ink";
 
 type Props = Omit<
     SequenceTypes.Props,
@@ -18,7 +17,7 @@ export function Window(props: Props): React.ReactNode {
         scrollBar: props.scrollBar ?? false,
         scrollColor: props.scrollColor ?? "white",
         scrollBarPosition: props.scrollBarPosition ?? "post",
-        vertical: props.vertical ?? true,
+        direction: props.direction ?? "vertical",
         wordList: undefined,
     } satisfies SequenceTypes.Props;
 

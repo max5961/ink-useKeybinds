@@ -29,13 +29,5 @@ export const initialItems: Item[] = [
 ];
 
 export const keybinds = {
-    toggleDone: { key: "return" },
-    updateShoutout: [{ input: " s" }, { input: " o" }],
-    deleteItem: { input: "dd" },
-    windowSize0: { input: "w0" },
-    windowSizeMax: { input: "wm" },
-    incSubCount: { input: "l" },
-    decSubCount: { input: "h" },
     quit: { input: "q" },
-    expand: { input: "e" },
 } satisfies KeyBinds;

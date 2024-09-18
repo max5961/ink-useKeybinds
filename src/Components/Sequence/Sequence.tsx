@@ -31,7 +31,7 @@ export namespace SequenceTypes {
         scrollColor?: string;
         scrollBarPosition?: "pre" | "post";
         wordList?: string[];
-        vertical?: boolean;
+        direction?: "vertical" | "horizontal";
         maintainState?: boolean;
     };
 }
@@ -44,7 +44,7 @@ export function Sequence<T extends KeyBinds = any>({
     scrollBar = true,
     scrollColor = "white",
     scrollBarPosition = "post",
-    vertical = true,
+    direction = "vertical",
     maintainState = true,
 }: SequenceTypes.Props): ReactNode {
     const [hw, setHw] = useState<{ height: number; width: number }>({
@@ -133,9 +133,7 @@ export function Sequence<T extends KeyBinds = any>({
         />
     );
 
-    const height = type === "PAGES" ? "100%" : undefined;
-
-    const verticalList = vertical && (
+    const verticalList = direction === "vertical" && (
         <Box flexDirection="column" height="100%" width="100%">
             <Box
                 flexDirection="row"
@@ -154,7 +152,7 @@ export function Sequence<T extends KeyBinds = any>({
         </Box>
     );
 
-    const horizontalList = !vertical && (
+    const horizontalList = direction === "horizontal" && (
         <Box flexDirection="row" height="100%" width="100%">
             <Box
                 flexDirection="column"

@@ -31,6 +31,10 @@ type Props = {
     commands: Commands;
 };
 
+interface OnCmd<T extends object = any> {
+    (cmd: keyof T, handler: () => void): any;
+}
+
 export type Commands = { [commandName: string]: (() => unknown) | null };
 
 export function CommandLine({
@@ -109,7 +113,7 @@ CommandLine.Prompt = function Prompt(): React.ReactNode {
     );
 };
 
-export function useOnCmd() {
+export function useOnCmd<T extends object = any>(): OnCmd<T> {
     const context = useContext(CommandLineContext);
     assert(
         context,
@@ -125,5 +129,5 @@ export function useOnCmd() {
     const isPageFocus = usePageFocus();
     const onCmd = context.onCmdGenerator(unsubscribeList.current, isPageFocus);
 
-    return onCmd;
+    return onCmd as OnCmd<T>;
 }

@@ -29,3 +29,14 @@ export function useItem<
 
     return context;
 }
+
+/*
+ * When creating event listeners, we can safely assume that if there is no item
+ * context then the Node exists outside of an Item component and there is no need
+ * to block the execution of the node based on its focus status
+ * */
+export function useItemFocus(): boolean {
+    const itemContext = useContext(ItemContext);
+    if (itemContext === null) return true;
+    return itemContext.isFocus;
+}

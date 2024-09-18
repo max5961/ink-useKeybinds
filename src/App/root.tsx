@@ -6,7 +6,7 @@ import { KeybindsProvider } from "../use-keybinds/KeybindsProvider.js";
 import { keybinds } from "./initialData.js";
 import { CommandLine } from "../Components/CommandLine/CommandLine.js";
 
-const commands = {
+export const commands = {
     foo: null,
     bar: null,
 };

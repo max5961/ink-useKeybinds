@@ -5,6 +5,7 @@ import { EventEmitter } from "events";
 import { randomUUID } from "crypto";
 import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
 import { usePageFocus } from "../Components/Sequence/SequenceUnit/PageContext.js";
+import { useItemFocus } from "../Components/Sequence/SequenceUnit/ItemContext.js";
 
 type Opts = {
     /*
@@ -56,7 +57,9 @@ export function useKeybinds<T extends KeyBinds = any>(
     }
 
     const isPageFocus = usePageFocus();
-    const canProcess = ProcessingGate.canProcess(ID, PRIORITY);
+    const isItemFocus = useItemFocus();
+    const canProcess =
+        ProcessingGate.canProcess(ID, PRIORITY) && isPageFocus && isItemFocus;
 
     /*
      * Unsubscribe and resubscribe to keypress events so that we don't end up
@@ -116,7 +119,7 @@ export function useKeybinds<T extends KeyBinds = any>(
         cmd: WONums<T>,
         handler: (stdin: string) => void,
     ): any {
-        if (canProcess && isPageFocus) {
+        if (canProcess) {
             HOOK_EMITTER.on(cmd, handler);
         }
     }
@@ -128,12 +131,13 @@ export function useKeybinds<T extends KeyBinds = any>(
     function onEventGenerator<T extends KeyBinds>(
         unsubscriberList: any,
         isPageFocus: boolean,
+        isItemFocus: boolean,
     ): OnEvent<T> {
         return function onEvent(
             cmd: WONums<T>,
             handler: (stdin: string) => unknown,
         ): void {
-            if (canProcess && isPageFocus) {
+            if (canProcess && isPageFocus && isItemFocus) {
                 HOOK_EMITTER.on(cmd, handler);
             }
             unsubscriberList.push(() => {
@@ -172,7 +176,11 @@ export interface OnEvent<T extends KeyBinds = any> {
 }
 
 export interface OnEventGenerator<T extends KeyBinds = any> {
-    (unsubscriberList: (() => void)[], isPageFocus: boolean): OnEvent<T>;
+    (
+        unsubscriberList: (() => void)[],
+        isPageFocus: boolean,
+        isItemFocus: boolean,
+    ): OnEvent<T>;
 }
 
 export type OnItem<T extends KeyBinds = any> = OnEvent<T>;

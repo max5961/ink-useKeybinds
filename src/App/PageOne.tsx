@@ -1,14 +1,26 @@
 import React, { useState } from "react";
 import { initialItems, keybinds, Item } from "./initialData.js";
 import { Box, Text } from "ink";
-import { useOnApp } from "../use-keybinds/KeybindsProvider.js";
 import { useOnCmd } from "../Components/CommandLine/CommandLine.js";
 import { List } from "../Components/List/List.js";
 import { useItem } from "../Components/Sequence/SequenceUnit/ItemContext.js";
 import { useFormInput } from "../Components/Input/useFormInput.js";
 import { Input } from "../Components/Input/Input.js";
-import { OnItem } from "../use-keybinds/useKeybinds.js";
+import { KeyBinds, OnItem, useKeybinds } from "../use-keybinds/useKeybinds.js";
 import { useList } from "../Components/List/useList.js";
+import { usePageFocus } from "../Components/Sequence/SequenceUnit/PageContext.js";
+import { commands } from "./root.js";
+
+export const pageOneKbs = {
+    toggleDone: { key: "return" },
+    updateShoutout: [{ input: " s" }, { input: " o" }],
+    deleteItem: { input: "dd" },
+    windowSize0: { input: "w0" },
+    windowSizeMax: { input: "wm" },
+    incSubCount: { input: "l" },
+    decSubCount: { input: "h" },
+    expand: { input: "e" },
+} satisfies KeyBinds;
 
 export default function PageOne(): React.ReactNode {
     const [items, setItems] = useState(initialItems);
@@ -16,16 +28,16 @@ export default function PageOne(): React.ReactNode {
     const [exp, setExp] = useState(true);
 
     const { listState, listUtil } = useList(items, {
-        keybinds,
+        keybinds: pageOneKbs,
         windowSize: 5,
-        navigation: "vi",
+        navigation: "vi-vertical",
         centerScroll: true,
         circular: false,
         vertical: true,
     });
 
-    const { onApp } = useOnApp<typeof keybinds>();
-    const onCmd = useOnCmd();
+    const onCmd = useOnCmd<typeof commands>();
+    const { onEvent } = useKeybinds(pageOneKbs);
 
     onCmd("foo", () => {
         setShoutout("foo shoutout");
@@ -35,7 +47,7 @@ export default function PageOne(): React.ReactNode {
         setShoutout("bar shoutout");
     });
 
-    onApp("expand", () => {
+    onEvent("expand", () => {
         if (exp) {
             listUtil.modifyWinSize(1);
         } else {
@@ -44,7 +56,7 @@ export default function PageOne(): React.ReactNode {
         setExp(!exp);
     });
 
-    onApp("windowSize0", () => {
+    onEvent("windowSize0", () => {
         listUtil.modifyWinSize(0);
     });
 
@@ -72,6 +84,8 @@ export default function PageOne(): React.ReactNode {
     });
 
     const wordList = items.map((i) => i.name);
+    const isPageFocus = usePageFocus();
+    const borderColor = isPageFocus ? "cyan" : undefined;
 
     return (
         <Box
@@ -81,8 +95,7 @@ export default function PageOne(): React.ReactNode {
             flexDirection="column"
             justifyContent="center"
             alignItems="center"
-            borderStyle="round"
-            borderColor="red"
+            borderColor={borderColor}
         >
             <Text>{`Last shoutout was: ${shoutout}`}</Text>
             <Box borderStyle="round" borderColor="white" width={50}>
@@ -107,7 +120,7 @@ type LIProps = {
 
 function ListItem({ setItems, setShoutout }: LIProps): React.ReactNode {
     const { onItem, isFocus, index, items } = useItem<
-        typeof keybinds,
+        typeof pageOneKbs,
         Item[]
     >();
 
@@ -145,6 +158,12 @@ function ListItem({ setItems, setShoutout }: LIProps): React.ReactNode {
         setItems(copy);
     }
 
+    const { onEvent } = useKeybinds({ sayItem: { key: "f6" } });
+
+    onEvent("sayItem", () => {
+        console.log(item.name);
+    });
+
     const color = isFocus ? "blue" : "";
     const focusCaret = isFocus ? ">" : " ";
     let cmpIcon = "";
@@ -164,10 +183,10 @@ function ListItem({ setItems, setShoutout }: LIProps): React.ReactNode {
     );
 }
 
-function NestedListItem(): React.ReactNode {
+const NestedListItem = React.memo(function NestedListItem(): React.ReactNode {
     const [state, setState] = useState<number>(0);
 
-    const { onItem, isFocus } = useItem<typeof keybinds>();
+    const { onItem, isFocus } = useItem<typeof pageOneKbs>();
 
     const color = isFocus ? "blue" : "";
 
@@ -184,4 +203,4 @@ function NestedListItem(): React.ReactNode {
             <Text color={color}>{` ${state}`}</Text>
         </>
     );
-}
+});

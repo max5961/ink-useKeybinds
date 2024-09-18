@@ -2,7 +2,6 @@ import React, { ReactNode } from "react";
 import { KeyBinds } from "../../use-keybinds/useKeybinds.js";
 import { Sequence, SequenceTypes } from "../Sequence/Sequence.js";
 import { UseSequenceTypes } from "../Sequence/useSequence.js";
-import { Box } from "ink";
 
 type Props<T extends KeyBinds = any> = Omit<
     SequenceTypes.Props<T>,
@@ -14,7 +13,7 @@ export function List<T extends KeyBinds = any>(props: Props<T>): ReactNode {
         type: "ITEMS",
         items: props.items,
         viewState: props.listState,
-        vertical: props.vertical ?? true,
+        direction: props.direction ?? "vertical",
         wordList: props.wordList ?? undefined,
         scrollBar: props.scrollBar ?? true,
         scrollColor: props.scrollColor ?? "white",
