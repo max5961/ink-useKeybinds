@@ -69,6 +69,21 @@ export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
         unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
     }
 
+    const renderCount = useRef(0);
+    if (++renderCount.current === 1) {
+        Register.checkSuccessfulMount();
+    }
+
+    useEffect(() => {
+        ProcessingGate.updatePriority(ID, PRIORITY);
+        Register.hasMounted();
+
+        return () => {
+            unsubscribe.current();
+            ProcessingGate.removeHook(ID);
+        };
+    }, []);
+
     useEffect(() => {
         ProcessingGate.updatePriority(ID, PRIORITY);
     }, [opts.priority]);
@@ -82,15 +97,6 @@ export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
             setData({ event: "", register: "" });
         }
     }, [opts.priority]);
-
-    useEffect(() => {
-        ProcessingGate.updatePriority(ID, PRIORITY);
-
-        return () => {
-            unsubscribe.current();
-            ProcessingGate.removeHook(ID);
-        };
-    }, []);
 
     function handleStdin(stdin: string) {
         Register.processConfig(kbConfig);

@@ -48,7 +48,7 @@ export function useMultipleEventsWithoutCtxChecks(listeners: Listener[]): void {
         return () => {
             Register.removeOldListeners(oldListeners.current);
         };
-    });
+    }, []);
 }
 
 export type Listener = {

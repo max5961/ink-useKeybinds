@@ -43,6 +43,7 @@ export const EVT = {
     keypress: "KEYPRESS",
     appStatus: "APP_STATUS",
     data: "data",
+    mounted: "MOUNTED",
 } as const;
 
 const EMITTER = new EventEmitter();
@@ -92,6 +93,38 @@ function subscribe(
         setImmediate(() => EMITTER.emit(EVT.appStatus));
         // EMITTER.emit(EVT.appStatus);
     };
+}
+
+/*
+ * PUBLIC
+ */
+function hasMounted(): void {
+    EMITTER.emit(EVT.mounted);
+}
+
+/*
+ * PUBLIC
+ * */
+function checkSuccessfulMount(): void {
+    let isMounted = false;
+
+    EMITTER.once(EVT.mounted, () => {
+        isMounted = true;
+    });
+
+    check();
+
+    function check(i: number = 0) {
+        if (++i === 5) return;
+
+        setImmediate(() => {
+            if (!isMounted) {
+                return pause();
+            } else {
+                check(i);
+            }
+        });
+    }
 }
 
 /*
@@ -377,6 +410,9 @@ function listen(): void {
  * Removes all extra listeners so that the app can exit
  * */
 function pause(): void {
+    HOOK_EMITTER.removeAllListeners();
+    EMITTER.removeAllListeners(EVT.mounted);
+
     process.stdin.removeListener(EVT.data, handleKeypress);
     EMITTER.removeListener(EVT.appStatus, handleAppStatus);
 
@@ -419,6 +455,8 @@ const Register = {
     getCharRegister,
     addEventListener,
     emit,
+    hasMounted,
+    checkSuccessfulMount,
 
     // For testing
     handleKeypress,

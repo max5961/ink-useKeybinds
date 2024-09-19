@@ -27,6 +27,20 @@ export function useItem<
     return context;
 }
 
+// if (type === "ITEMS") {
+//     return (
+//         <ItemContext.Provider
+//             value={{
+//                 isFocus,
+//                 index,
+//                 items,
+//             }}
+//         >
+//             {getUnits()}
+//         </ItemContext.Provider>
+//     );
+// }
+
 /*
  * When creating event listeners, we can safely assume that if there is no item
  * context then the Node exists outside of an Item component and there is no need
