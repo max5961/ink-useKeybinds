@@ -1,11 +1,8 @@
-import { KeyBinds, OnPage } from "../../../use-keybinds/useKeybinds.js";
-import EventEmitter from "events";
+import { KeyBinds } from "../../../use-keybinds/useKeybinds.js";
 import { createContext, useContext } from "react";
 
 export type PageContext<KeyBindsType extends KeyBinds = any> = {
-    onPage: OnPage<KeyBindsType>;
     isFocus: boolean;
-    emitter: EventEmitter;
     index: number;
 };
 

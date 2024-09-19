@@ -1,28 +1,37 @@
 import { KeyBinds } from "../../../use-keybinds/useKeybinds.js";
 
+export const LIST_CMDS = {
+    increment: "USE_KEYBINDS_INCREMENT",
+    decrement: "USE_KEYBINDS_DECREMENT",
+    scrollUp: "USE_KEYBINDS_SCROLL_UP",
+    scrollDown: "USE_KEYBINDS_SCROLL_DOWN",
+    goToTop: "USE_KEYBINDS_GO_TO_TOP",
+    goToBottom: "USE_KEYBINDS_GO_TO_BOTTOM",
+} as const;
+
 const arrowVertical = {
-    increment: [{ key: "down" }, { key: "tab" }],
-    decrement: [{ key: "up" }],
+    [LIST_CMDS.increment]: [{ key: "down" }, { key: "tab" }],
+    [LIST_CMDS.decrement]: [{ key: "up" }],
 } satisfies KeyBinds;
 
 const arrowHorizontal = {
-    increment: [{ key: "right" }, { key: "tab" }],
-    decrement: [{ key: "left" }],
+    [LIST_CMDS.increment]: [{ key: "right" }, { key: "tab" }],
+    [LIST_CMDS.decrement]: [{ key: "left" }],
 } satisfies KeyBinds;
 
 const vimVertical = {
-    increment: [{ input: "j" }, { key: "down" }, { key: "tab" }],
-    decrement: [{ input: "k" }, { key: "up" }],
-    scroll_up: { key: "ctrl", input: "u" },
-    scroll_down: { key: "ctrl", input: "d" },
-    goToTop: { input: "gg" },
-    goToBottom: { input: "G" },
+    [LIST_CMDS.increment]: [{ input: "j" }, { key: "down" }, { key: "tab" }],
+    [LIST_CMDS.decrement]: [{ input: "k" }, { key: "up" }],
+    [LIST_CMDS.scrollUp]: { key: "ctrl", input: "u" },
+    [LIST_CMDS.scrollDown]: { key: "ctrl", input: "d" },
+    [LIST_CMDS.goToTop]: { input: "gg" },
+    [LIST_CMDS.goToBottom]: { input: "G" },
 } satisfies KeyBinds;
 
 const vimHorizontal = {
     ...vimVertical,
-    increment: [{ input: "l" }, { key: "right" }, { key: "tab" }],
-    decrement: [{ input: "h" }, { key: "left" }],
+    [LIST_CMDS.increment]: [{ input: "l" }, { key: "right" }, { key: "tab" }],
+    [LIST_CMDS.decrement]: [{ input: "h" }, { key: "left" }],
 } satisfies KeyBinds;
 
 export const ListKeybinds = {

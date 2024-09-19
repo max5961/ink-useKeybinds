@@ -1,14 +1,12 @@
-import EventEmitter from "events";
 import { useState } from "react";
 import { KeyBinds, useKeybinds } from "../../use-keybinds/useKeybinds.js";
-import { ListKeybinds } from "./util/ListKeybinds.js";
+import { LIST_CMDS, ListKeybinds } from "./util/ListKeybinds.js";
 import { HandleScroll } from "./util/HandleScroll.js";
-import { usePageFocus } from "./SequenceUnit/PageContext.js";
+import { useEvent } from "../../use-keybinds/useEvent.js";
 
 export namespace UseSequenceTypes {
     export type Opts = {
         windowSize?: number | null;
-        keybinds?: KeyBinds;
         navigation?:
             | "none"
             | "vi-vertical"
@@ -34,7 +32,6 @@ export namespace UseSequenceTypes {
         _idx: number;
         _winSize: number;
         _itemsLen: number;
-        _emitter: EventEmitter;
         _util: Util;
         _items: any[];
     }>;
@@ -45,7 +42,6 @@ export namespace UseSequenceTypes {
         prevItem: () => void;
         goToIndex: (n: number) => void;
         modifyWinSize: (n: number) => void;
-        emitter: EventEmitter;
     };
 
     export type Return = {
@@ -107,8 +103,6 @@ export function useSequence(
 
     handle();
 
-    const emitter = new EventEmitter();
-
     // prettier-ignore
     const getNavigationKeybinds = () => {
         switch (opts.navigation) {
@@ -120,65 +114,27 @@ export function useSequence(
         }
     }
 
-    const customKeybinds = opts.keybinds || {};
     const navigationKeybinds = getNavigationKeybinds();
-    const config = { ...customKeybinds, ...navigationKeybinds };
+    useKeybinds(navigationKeybinds);
 
-    const { onEvent } = useKeybinds<
-        | typeof ListKeybinds.vimVertical
-        | typeof ListKeybinds.vimHorizontal
-        | typeof ListKeybinds.arrowVertical
-        | typeof ListKeybinds.arrowHorizontal
-        | typeof customKeybinds
-    >(config as any);
-
-    const isPageFocus = usePageFocus();
-
-    // prettier-ignore
-    const willHandle = { increment: null, decrement: null, goToTop: null, goToBottom: null, scroll_up: null, scroll_down: null};
-    for (const key in config) {
-        if (key in willHandle) {
-            continue;
-        }
-
-        onEvent(key as any, (stdin: string) => {
-            if (!isPageFocus) return;
-
-            emitter.emit(key, stdin);
-        });
-    }
-
-    if (opts?.navigation !== "none" && isPageFocus) {
-        onEvent("increment", () => {
-            emitter.emit("increment");
-            nextItem();
-        });
-
-        onEvent("decrement", () => {
-            emitter.emit("decrement");
-            prevItem();
-        });
-
-        onEvent("goToTop", () => {
-            emitter.emit("goToTop");
-            goToIndex(0);
-        });
-
-        onEvent("goToBottom", () => {
-            emitter.emit("goToBottom");
-            goToIndex(LENGTH - 1);
-        });
-
-        onEvent("scroll_down", () => {
-            emitter.emit("scroll_down");
-            scrollDown();
-        });
-
-        onEvent("scroll_up", () => {
-            emitter.emit("scroll_up");
-            scrollUp();
-        });
-    }
+    useEvent(LIST_CMDS.increment, () => {
+        nextItem();
+    });
+    useEvent(LIST_CMDS.decrement, () => {
+        prevItem();
+    });
+    useEvent(LIST_CMDS.goToTop, () => {
+        goToIndex(0);
+    });
+    useEvent(LIST_CMDS.goToBottom, () => {
+        goToIndex(LENGTH - 1);
+    });
+    useEvent(LIST_CMDS.scrollDown, () => {
+        scrollDown();
+    });
+    useEvent(LIST_CMDS.scrollUp, () => {
+        scrollUp();
+    });
 
     const util = {
         currentIndex: state.idx,
@@ -186,7 +142,6 @@ export function useSequence(
         prevItem,
         goToIndex,
         modifyWinSize,
-        emitter,
     };
 
     /* This must be passed into the List component */
@@ -196,7 +151,6 @@ export function useSequence(
         _idx: state.idx,
         _winSize: WINDOW_SIZE,
         _itemsLen: LENGTH,
-        _emitter: emitter,
         _util: util,
         _items: items,
     });

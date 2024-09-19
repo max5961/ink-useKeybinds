@@ -1,33 +1,35 @@
 import React from "react";
 import { Box } from "ink";
-import { OnUnit } from "../../../use-keybinds/useKeybinds.js";
-import EventEmitter from "events";
 import { SequenceTypes } from "../Sequence.js";
 import { PageContext } from "./PageContext.js";
 import { ItemContext } from "./ItemContext.js";
+import {
+    Listener,
+    useMultipleEventsWithoutCtxChecks,
+} from "../../../use-keybinds/useEvent.js";
 
 export type Props = React.PropsWithChildren & {
     type: SequenceTypes.Type;
     isFocus: boolean;
-    onUnit: OnUnit;
-    emitter: EventEmitter;
     isHidden: boolean;
     maintainState: boolean;
     index: number;
     items: any;
+    listeners: Listener[];
 };
 
 export function SequenceUnit({
     children,
     type,
-    onUnit,
+    listeners,
     items,
     isFocus,
-    emitter,
     index,
     isHidden,
     maintainState,
 }: Props): React.ReactNode {
+    useMultipleEventsWithoutCtxChecks(listeners);
+
     const dim = type === "PAGES" ? "100%" : undefined;
 
     const getUnits = () => {
@@ -50,10 +52,8 @@ export function SequenceUnit({
         return (
             <PageContext.Provider
                 value={{
-                    onPage: onUnit,
                     isFocus,
                     index,
-                    emitter,
                 }}
             >
                 {getUnits()}
@@ -65,9 +65,7 @@ export function SequenceUnit({
         return (
             <ItemContext.Provider
                 value={{
-                    onItem: onUnit,
                     isFocus,
-                    emitter,
                     index,
                     items,
                 }}

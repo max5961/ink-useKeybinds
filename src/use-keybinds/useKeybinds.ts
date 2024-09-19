@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Register, { EVT } from "./Register.js";
 import { Key } from "./Keycodes.js";
-import { EventEmitter } from "events";
 import { randomUUID } from "crypto";
 import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
 import { usePageFocus } from "../Components/Sequence/SequenceUnit/PageContext.js";
@@ -27,24 +26,23 @@ type Opts = {
     priority?: Priority;
 };
 
-type Return<T extends KeyBinds> = StdinData<T> & {
-    onEvent: OnEvent<T>;
-    onEventGenerator: OnEventGenerator<T>;
-};
+type Return = StdinData;
 
-export function useKeybinds<T extends KeyBinds = any>(
-    kbConfig: T,
-    opts?: Opts,
-): Return<T> {
+/*
+ * Responsible for responding to keypress events and processing the KeyBinds
+ * object passed as an argument.  Returns { register, event } which is updated
+ * on every keypress if the trackState option is set.  trackState is defaulted
+ * to false
+ * */
+export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
     opts = { trackState: false, priority: "default", ...opts };
 
     const ProcessingGate = useKeybindPriority();
 
     const PRIORITY = opts.priority || "default";
     const [ID] = useState(randomUUID());
-    const [HOOK_EMITTER] = useState(new EventEmitter());
 
-    const [data, setData] = useState<StdinData<T>>({
+    const [data, setData] = useState<StdinData>({
         register: "",
         event: "",
     });
@@ -62,14 +60,18 @@ export function useKeybinds<T extends KeyBinds = any>(
         ProcessingGate.canProcess(ID, PRIORITY) && isPageFocus && isItemFocus;
 
     /*
-     * Unsubscribe and resubscribe to keypress events so that we don't end up
-     * with extra untracked listeners
+     * Unsubscribe and resubscribe this hook to keypress events every render so
+     * that there aren't any untracked listeners
      * */
     const unsubscribe = useRef<() => void>(() => {});
     unsubscribe.current();
     if (canProcess) {
         unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
     }
+
+    useEffect(() => {
+        ProcessingGate.updatePriority(ID, PRIORITY);
+    }, [opts.priority]);
 
     useEffect(() => {
         if (canProcess) {
@@ -79,10 +81,6 @@ export function useKeybinds<T extends KeyBinds = any>(
         if (opts.trackState) {
             setData({ event: "", register: "" });
         }
-    }, [canProcess]);
-
-    useEffect(() => {
-        ProcessingGate.updatePriority(ID, PRIORITY);
     }, [opts.priority]);
 
     useEffect(() => {
@@ -90,7 +88,6 @@ export function useKeybinds<T extends KeyBinds = any>(
 
         return () => {
             unsubscribe.current();
-            HOOK_EMITTER.removeAllListeners();
             ProcessingGate.removeHook(ID);
         };
     }, []);
@@ -108,56 +105,16 @@ export function useKeybinds<T extends KeyBinds = any>(
             });
         }
 
-        if (event) {
-            HOOK_EMITTER.emit(event, stdin);
-        }
+        // Only emits if an event has not already been emitted this processing cycle
+        Register.emit(event, stdin);
     }
 
-    HOOK_EMITTER.removeAllListeners();
-
-    function onEvent<T extends KeyBinds>(
-        cmd: WONums<T>,
-        handler: (stdin: string) => void,
-    ): any {
-        if (canProcess) {
-            HOOK_EMITTER.on(cmd, handler);
-        }
-    }
-
-    /* For use within the Keybinds context component so that each component
-     * that uses the context is separate from one another and allows to
-     * unsubscribe and resubscribe on every re-render so that there aren't
-     * multiple responders to an event */
-    function onEventGenerator<T extends KeyBinds>(
-        unsubscriberList: any,
-        isPageFocus: boolean,
-        isItemFocus: boolean,
-    ): OnEvent<T> {
-        return function onEvent(
-            cmd: WONums<T>,
-            handler: (stdin: string) => unknown,
-        ): void {
-            if (canProcess && isPageFocus && isItemFocus) {
-                HOOK_EMITTER.on(cmd, handler);
-            }
-            unsubscriberList.push(() => {
-                HOOK_EMITTER.removeListener(cmd, handler);
-            });
-        };
-    }
-
-    return {
-        onEvent,
-        onEventGenerator,
-        ...data,
-    };
+    return data;
 }
 
 export type KeyBinds = {
-    [key: string]: Binding[] | Binding;
+    [key: string | number]: Binding[] | Binding;
 };
-
-export type KeyBindEvent<T extends Readonly<KeyBinds>> = keyof T;
 
 export type Binding = {
     key?: Key;
@@ -166,31 +123,7 @@ export type Binding = {
     notInput?: string[];
 };
 
-export type StdinData<T extends KeyBinds = any> = {
+export type StdinData = {
     register: string;
-    event: KeyBindEvent<T> | "";
+    event: string;
 };
-
-export interface OnEvent<T extends KeyBinds = any> {
-    (cmd: WONums<T>, handler: (stdin: string) => unknown): void;
-}
-
-export interface OnEventGenerator<T extends KeyBinds = any> {
-    (
-        unsubscriberList: (() => void)[],
-        isPageFocus: boolean,
-        isItemFocus: boolean,
-    ): OnEvent<T>;
-}
-
-export type OnItem<T extends KeyBinds = any> = OnEvent<T>;
-export type OnPage<T extends KeyBinds = any> = OnEvent<T>;
-export type OnUnit<T extends KeyBinds = any> = OnEvent<T>;
-
-/* union type of the keys of an object but excludes possible number types that
- * aren't compatible with types that expect strings */
-export type WONums<T extends object> = T extends object
-    ? keyof T extends string | symbol
-        ? keyof T
-        : string
-    : string;

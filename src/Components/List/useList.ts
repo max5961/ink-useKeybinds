@@ -1,8 +1,7 @@
-import { KeyBinds } from "../../use-keybinds/useKeybinds.js";
 import { useSequence, UseSequenceTypes } from "../Sequence/useSequence.js";
 
 export namespace UseList {
-    export type Return<T extends KeyBinds = any> = {
+    export type Return = {
         listState: UseSequenceTypes.ViewState;
         listUtil: UseSequenceTypes.Util;
     };

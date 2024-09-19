@@ -9,7 +9,6 @@ export namespace UseWindow {
 
     export type WindowUtil = {
         goToPage: UseSequenceTypes.Util["goToIndex"];
-        emitter: UseSequenceTypes.Util["emitter"];
         nextPage: UseSequenceTypes.Util["nextItem"];
         prevPage: UseSequenceTypes.Util["prevItem"];
         currentPageIndex: UseSequenceTypes.Util["currentIndex"];
@@ -30,15 +29,10 @@ export function useWindow(
     opts.windowSize = opts.windowSize ?? 1;
     opts.navigation = opts.navigation ?? "none";
 
-    if (opts.navigation) {
-        opts.keybinds = opts.keybinds || defaultKeybinds;
-    }
-
     const { viewState, util } = useSequence(pages, opts);
 
     const windowUtil = {
         goToPage: util.goToIndex,
-        emitter: util.emitter,
         nextPage: util.nextItem,
         prevPage: util.prevItem,
         currentPageIndex: util.currentIndex,

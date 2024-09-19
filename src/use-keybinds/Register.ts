@@ -1,6 +1,7 @@
 import EventEmitter from "events";
 import { Binding, KeyBinds } from "./useKeybinds.js";
 import { KEYCODES, newKeyRegister, NonAlphaKeys } from "./Keycodes.js";
+import { Listener } from "./useEvent.js";
 
 /*
  * This module is the single source of truth for all keypress data.  On every
@@ -25,6 +26,7 @@ type State = {
     listening: boolean;
     command: string | null;
     commandSet: boolean;
+    eventEmitted: boolean;
 };
 
 const state: State = {
@@ -34,6 +36,7 @@ const state: State = {
     listening: false,
     command: null,
     commandSet: false,
+    eventEmitted: false,
 };
 
 export const EVT = {
@@ -44,6 +47,9 @@ export const EVT = {
 
 const EMITTER = new EventEmitter();
 EMITTER.setMaxListeners(15);
+
+export const HOOK_EMITTER = new EventEmitter();
+HOOK_EMITTER.setMaxListeners(100);
 
 /*
  * PUBLIC
@@ -66,7 +72,7 @@ function subscribe(
         process.stdin.setRawMode(true);
     } else {
         ++notTTYcount === 1 &&
-            console.error(
+            console.warn(
                 "Raw mode not supported.  Keypresses will not behave as expected",
             );
     }
@@ -90,6 +96,49 @@ function subscribe(
 
 /*
  * PUBLIC
+ * Removes old event listeners added from a hook.
+ * */
+function removeOldListeners(oldListeners: Listener[]): void {
+    for (const listener of oldListeners) {
+        const { cmd, handler } = listener;
+        HOOK_EMITTER.removeListener(cmd, handler);
+    }
+}
+
+/*
+ * PUBLIC
+ * Only emits an event if one has not already been emitted during this processing
+ * cycle
+ * */
+function emit(event: string | null, stdin: string): void {
+    if (state.eventEmitted || event === null) return;
+
+    HOOK_EMITTER.emit(event, stdin);
+    state.eventEmitted = true;
+}
+
+/*
+ * PUBLIC
+ * Adds an event listener to the HOOK_EMITTER object.  If onEvent is passed as a
+ * prop this won't unsubscribe the previous render if the child re-renders without
+ * the parent that provided onEvent, leading to extra handler executions for the
+ * child
+ * */
+function addEventListener({
+    cmd,
+    handler,
+    oldListeners,
+}: {
+    cmd: string;
+    handler: (...args: any[]) => unknown;
+    oldListeners: Listener[];
+}): void {
+    oldListeners.push({ cmd, handler });
+    HOOK_EMITTER.on(cmd, handler);
+}
+
+/*
+ * PUBLIC
  * */
 function getCommand(): string | null {
     return state.command;
@@ -105,15 +154,12 @@ function getCharRegister(): string {
 /*
  * PRIVATE
  * */
-function setCommand(command: string): void {
-    state.command = command;
+function setCommand(command: string | number): void {
+    state.command = typeof command === "string" ? command : String(command);
     state.chars = "";
 
-    // should also reset state.keys and state.ctrlKeys
-    state.keys = newKeyRegister();
-    state.ctrlKeys = "";
-
-    // OR just block config processing until the next keypress with commandSet var
+    // Block config processing until the next EVT.keypress event.
+    // Next EVT.keypress event will also reset all of the stdin registers
     state.commandSet = true;
 }
 
@@ -169,7 +215,7 @@ function processConfig(config: KeyBinds): void {
             match = checkMatch(binding, hasNonAlphaKey);
         }
 
-        if (match) return setCommand(command);
+        if (match) setCommand(command);
     }
 }
 
@@ -237,6 +283,7 @@ function checkNotMatch(binding: Binding): boolean {
  * */
 function handleKeypress(stdin: string): void {
     state.commandSet = false;
+    state.eventEmitted = false;
     state.command = null;
     state.ctrlKeys = "";
 
@@ -364,11 +411,14 @@ function handleAppStatus(): void {
 
 const Register = {
     listen,
+    removeOldListeners,
     pause,
     subscribe,
     processConfig,
     getCommand,
     getCharRegister,
+    addEventListener,
+    emit,
 
     // For testing
     handleKeypress,

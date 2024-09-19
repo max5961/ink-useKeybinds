@@ -1,20 +1,17 @@
 import React, { useState, ReactNode, useRef, useEffect } from "react";
 import { Box, measureElement } from "ink";
 import ScrollBar from "./Scrollbar.js";
-import { KeyBinds, OnEvent } from "../../use-keybinds/useKeybinds.js";
+import { KeyBinds } from "../../use-keybinds/useKeybinds.js";
 import { UseSequenceTypes } from "./useSequence.js";
-import { Search } from "../Search/Search.js";
+// import { Search } from "../Search/Search.js";
 import { isRenderable } from "./util/isRenderable.js";
 import { SequenceUnit } from "./SequenceUnit/SequenceUnit.js";
 import { usePageFocus } from "./SequenceUnit/PageContext.js";
+import { KeyOf, Listener } from "../../use-keybinds/useEvent.js";
 
 export namespace SequenceTypes {
-    export interface ItemGen<T extends KeyBinds = any> {
-        (isFocus: boolean, onItem: OnEvent<T>): React.ReactNode;
-    }
-
-    export interface PageGen<T extends KeyBinds = any> {
-        (isFocus: boolean, onPage: OnEvent<T>): React.ReactNode;
+    export interface OnEvent<T extends KeyBinds = any> {
+        (cmd: KeyOf<T>, handler: (...args: any[]) => unknown): void;
     }
 
     export interface UnitGen<T extends KeyBinds = any> {
@@ -36,6 +33,19 @@ export namespace SequenceTypes {
     };
 }
 
+/* ----- UNTIL USEEVENT IS SETTLED ----- */
+function Search({
+    wordList,
+    idx,
+    goToIdx,
+}: {
+    wordList: string[];
+    idx: number;
+    goToIdx: (n: number) => void;
+}): React.ReactNode {
+    return null;
+}
+
 export function Sequence<T extends KeyBinds = any>({
     items,
     viewState,
@@ -53,24 +63,22 @@ export function Sequence<T extends KeyBinds = any>({
     });
 
     const isPageFocus = usePageFocus();
-
     const generatedItems = items.map(
-        (item: SequenceTypes.ItemGen | React.ReactNode, idx: number) => {
+        (item: SequenceTypes.UnitGen | React.ReactNode, idx: number) => {
+            const listeners: Listener[] = [];
+
             const isFocus = idx === viewState._idx;
-
-            const onUnit: OnEvent<T> = (...args: Parameters<OnEvent>) => {
+            const onUnit = (
+                cmd: string,
+                handler: (...args: any[]) => unknown,
+            ) => {
                 if (!isFocus || !isPageFocus) return;
-
-                /* Make sure that on every re-render we are using the most recent
-                 * handler which prevents stale closure as well as unneccessary
-                 * listeners */
-                viewState._emitter.removeAllListeners(args[0]);
-                viewState._emitter.on(args[0], args[1]);
+                listeners.push({ cmd, handler });
             };
 
             const node = isRenderable(item)
                 ? item
-                : (item as SequenceTypes.ItemGen<T>)(isFocus, onUnit);
+                : (item as SequenceTypes.UnitGen<T>)(isFocus, onUnit);
 
             const key = (node as React.ReactElement).key;
             const isHidden = idx < viewState._start || idx >= viewState._end;
@@ -79,14 +87,13 @@ export function Sequence<T extends KeyBinds = any>({
                 <SequenceUnit
                     key={key}
                     type={type}
+                    listeners={listeners}
                     isHidden={isHidden}
                     maintainState={maintainState ?? false}
                     /* context */
                     isFocus={idx === viewState._idx}
-                    onUnit={onUnit}
                     index={idx}
                     items={viewState._items}
-                    emitter={viewState._emitter}
                     /* context */
                 >
                     {node as React.ReactNode}

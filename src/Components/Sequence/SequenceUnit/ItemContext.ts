@@ -1,15 +1,12 @@
-import { KeyBinds, OnItem } from "../../../use-keybinds/useKeybinds.js";
-import EventEmitter from "events";
+import { KeyBinds } from "../../../use-keybinds/useKeybinds.js";
 import { createContext, useContext } from "react";
 
 export type ItemContext<
     KeyBindsType extends KeyBinds = any,
     ItemsType extends any[] = any,
 > = {
-    onItem: OnItem<KeyBindsType>;
     items: ItemsType;
     isFocus: boolean;
-    emitter: EventEmitter;
     index: number;
 };
 
