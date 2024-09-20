@@ -7,47 +7,57 @@ import { useList } from "../Components/List/useList.js";
 import { SequenceTypes } from "../Components/Sequence/Sequence.js";
 import { List } from "../Components/List/List.js";
 import { useItem } from "../Components/Sequence/SequenceUnit/ItemContext.js";
-import Register from "../use-keybinds/Register.js";
+import { useFormInput } from "../Components/Input/useFormInput.js";
+import { Input } from "../Components/Input/Input.js";
 
-const appkbs = {
+const kbs1 = {
     foo: { input: "f" },
     bar: { input: "b" },
     quit: { input: "q" },
+    // switchToTwo: { input: "2" },
     mark_complete: { key: "return" },
 } satisfies KeyBinds;
 
+const kbs2 = {
+    bro: { input: "a" },
+    dude: { input: "d" },
+    switchToOne: { input: "1" },
+    quit: { input: "q" },
+} satisfies KeyBinds;
+
+// const kbs3: KeyBinds = {
+//     baz: { input: "0", foo: "yes" },
+// };
+
 export default function App(): React.ReactNode {
     const [items, setItems] = useState<Item[]>(initialItems);
-    const [isErr, setIsErr] = useState(false);
     const { exit } = useApp();
 
-    useKeybinds(appkbs);
+    useKeybinds(kbs1);
+
     const { listState } = useList(items, { windowSize: 5 });
-    const { useEvent } = useTypedEvent<typeof appkbs>();
 
-    useEvent("quit", () => {
-        console.log("quitting...");
-        exit();
-    });
+    const one = useTypedEvent<typeof kbs1>();
 
-    useEvent("foo", () => {
+    one.useEvent("quit", quit);
+    one.useEvent("foo", () => {
         console.log("foo");
     });
-
-    useEvent("bar", () => {
-        setIsErr(!isErr);
+    one.useEvent("bar", () => {
+        console.log("bar");
     });
+
+    function quit() {
+        console.log("quitting...");
+        exit();
+    }
 
     const listItems = items.map((item, idx) => {
         return (
             isFocus: boolean,
-            event: SequenceTypes.OnEvent<typeof appkbs>,
+            event: SequenceTypes.OnEvent<typeof kbs1>,
         ) => {
             const color = isFocus ? "blue" : undefined;
-
-            event("foo", () => {
-                Register.pause();
-            });
 
             event("mark_complete", () => {
                 const copy = items.slice();
@@ -57,12 +67,7 @@ export default function App(): React.ReactNode {
 
             const cmpIcon = item.completed ? " " : "  ";
 
-            return (
-                <Text key={item.id} color={color}>
-                    <Nested />
-                    {`${item.name}${cmpIcon}`}
-                </Text>
-            );
+            return <ListItem key={item.id} setItems={setItems} />;
         };
     });
 
@@ -74,19 +79,47 @@ export default function App(): React.ReactNode {
         };
     }, []);
 
-    const bro = <Box>;</Box>;
-
     return (
         <Box borderStyle="round" width="50">
-            {isErr ? bro : null}
             <List items={listItems} listState={listState} />
+        </Box>
+    );
+}
+
+function ListItem({
+    setItems,
+}: {
+    setItems: (items: Item[]) => void;
+}): React.ReactNode {
+    const { items, item, index, isFocus } = useItem<Item[]>();
+
+    const text = useFormInput({
+        enter: { input: "i" },
+        exit: { key: "return" },
+        defaultVal: item.name,
+        // active: isFocus,
+    });
+
+    function onSubmit() {
+        const copy = items.slice();
+        copy[index] = { ...item, name: text.str };
+        setItems(copy);
+    }
+
+    const cmpIcon = item.completed ? " " : "  ";
+    const color = isFocus ? "blue" : undefined;
+
+    return (
+        <Box display="flex">
+            <Input text={text} color={color} onSubmit={onSubmit} />
+            <Text color={color}>{cmpIcon}</Text>
         </Box>
     );
 }
 
 function Nested(): React.ReactNode {
     const { items, index } = useItem();
-    const { useEvent } = useTypedEvent<typeof appkbs>();
+    const { useEvent } = useTypedEvent<typeof kbs1>();
 
     const item = items[index];
 
@@ -94,11 +127,11 @@ function Nested(): React.ReactNode {
         console.log(`Toggling ${item.name}...`);
     });
 
-    useEvent("mark_complete", () => {
-        console.log(
-            `Item: ${item.name} is ${!item.completed ? "done" : "not done"}\n`,
-        );
-    });
+    // useEvent("mark_complete", () => {
+    //     console.log(
+    //         `Item: ${item.name} is ${!item.completed ? "done" : "not done"}\n`,
+    //     );
+    // });
 
     return null;
 }

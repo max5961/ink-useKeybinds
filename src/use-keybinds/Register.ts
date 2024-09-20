@@ -6,17 +6,12 @@ import { Listener } from "./useEvent.js";
 /*
  * This module is the single source of truth for all keypress data.  On every
  * keypress, the Register is updated which notifies each useKeybinds hook to
- * process their configurations to check for keybind matches.  Each hook returns
- * an onCmd function that can respond to matches.
+ * process their configurations to check for keybind matches.  Because the
+ * Register holds up to 2 alphanumeric keys, if each hook had its own separate
+ * Register state you would end up with inconsistent behavior
  *
- * The keypress Register stores the 2 most recent alphanumeric keys pressed and a
- * mapping of the non-alphanumeric keys pressed.  The Register resets when a
- * configuration is processed and matches the Register state.  The only
- * non-alphanumeric keys that can be combined are ctrl + any alphanumeric key.
- * Otherwise non-alphanumeric keys can only be mapped with themselves.
- *
- * Because the Register holds up to 2 alphanumeric keys, if each hook had their
- * own Register, you would end up with inconsistent behavior
+ * The only non-alphanumeric keys that can be combined are ctrl + any alphanumeric
+ * key. Otherwise non-alphanumeric keys can only be mapped with themselves.
  * */
 
 type State = {
@@ -24,8 +19,8 @@ type State = {
     keys: NonAlphaKeys;
     ctrlKeys: string;
     listening: boolean;
-    command: string | null;
-    commandSet: boolean;
+    event: string | null;
+    eventSet: boolean;
     eventEmitted: boolean;
 };
 
@@ -34,8 +29,8 @@ const state: State = {
     keys: newKeyRegister(),
     ctrlKeys: "",
     listening: false,
-    command: null,
-    commandSet: false,
+    event: null,
+    eventSet: false,
     eventEmitted: false,
 };
 
@@ -46,11 +41,18 @@ export const EVT = {
     mounted: "MOUNTED",
 } as const;
 
-const EMITTER = new EventEmitter();
-EMITTER.setMaxListeners(15);
+/*
+ * Handles EVT events that are relevant to this module and notifies functions
+ * that have subscribed to keypress events within the useKeybinds hook
+ * */
+const REGISTER_EMITTER = new EventEmitter();
+REGISTER_EMITTER.setMaxListeners(15);
 
-export const HOOK_EMITTER = new EventEmitter();
-HOOK_EMITTER.setMaxListeners(100);
+/*
+ * Emits events within the App that useEvent hooks can respond to.
+ * */
+export const APP_EMITTER = new EventEmitter();
+APP_EMITTER.setMaxListeners(100);
 
 /*
  * PUBLIC
@@ -66,7 +68,7 @@ function subscribe(
     event: typeof EVT.keypress,
     listener: (stdin: string) => void,
 ): () => void {
-    EMITTER.addListener(event, listener);
+    REGISTER_EMITTER.addListener(event, listener);
 
     process.stdin.setEncoding("utf-8");
     if (process.stdin.isTTY) {
@@ -79,7 +81,7 @@ function subscribe(
     }
 
     return () => {
-        EMITTER.removeListener(event, listener);
+        REGISTER_EMITTER.removeListener(event, listener);
 
         /* This wont effect normal state updates since by the time this executes
          * there will be a new subscriber in place of the old one.  However, it
@@ -90,8 +92,8 @@ function subscribe(
          * all listeners set by this module which will cause the application to
          * exit
          * */
-        setImmediate(() => EMITTER.emit(EVT.appStatus));
-        // EMITTER.emit(EVT.appStatus);
+        setImmediate(() => REGISTER_EMITTER.emit(EVT.appStatus));
+        // REGISTER_EMITTER.emit(EVT.appStatus);
     };
 }
 
@@ -99,7 +101,7 @@ function subscribe(
  * PUBLIC
  */
 function hasMounted(): void {
-    EMITTER.emit(EVT.mounted);
+    REGISTER_EMITTER.emit(EVT.mounted);
 }
 
 /*
@@ -108,7 +110,7 @@ function hasMounted(): void {
 function checkSuccessfulMount(): void {
     let isMounted = false;
 
-    EMITTER.once(EVT.mounted, () => {
+    REGISTER_EMITTER.once(EVT.mounted, () => {
         isMounted = true;
     });
 
@@ -134,7 +136,7 @@ function checkSuccessfulMount(): void {
 function removeOldListeners(oldListeners: Listener[]): void {
     for (const listener of oldListeners) {
         const { cmd, handler } = listener;
-        HOOK_EMITTER.removeListener(cmd, handler);
+        APP_EMITTER.removeListener(cmd, handler);
     }
 }
 
@@ -146,13 +148,13 @@ function removeOldListeners(oldListeners: Listener[]): void {
 function emit(event: string | null, stdin: string): void {
     if (state.eventEmitted || event === null) return;
 
-    HOOK_EMITTER.emit(event, stdin);
+    APP_EMITTER.emit(event, stdin);
     state.eventEmitted = true;
 }
 
 /*
  * PUBLIC
- * Adds an event listener to the HOOK_EMITTER object.  If onEvent is passed as a
+ * Adds an event listener to the APP_EMITTER object.  If onEvent is passed as a
  * prop this won't unsubscribe the previous render if the child re-renders without
  * the parent that provided onEvent, leading to extra handler executions for the
  * child
@@ -167,14 +169,14 @@ function addEventListener({
     oldListeners: Listener[];
 }): void {
     oldListeners.push({ cmd, handler });
-    HOOK_EMITTER.on(cmd, handler);
+    APP_EMITTER.on(cmd, handler);
 }
 
 /*
  * PUBLIC
  * */
-function getCommand(): string | null {
-    return state.command;
+function getEvent(): string | null {
+    return state.event;
 }
 
 /*
@@ -187,13 +189,13 @@ function getCharRegister(): string {
 /*
  * PRIVATE
  * */
-function setCommand(command: string | number): void {
-    state.command = typeof command === "string" ? command : String(command);
+function setEvent(event: string | number): void {
+    state.event = typeof event === "string" ? event : String(event);
     state.chars = "";
 
     // Block config processing until the next EVT.keypress event.
     // Next EVT.keypress event will also reset all of the stdin registers
-    state.commandSet = true;
+    state.eventSet = true;
 }
 
 /*
@@ -226,20 +228,20 @@ function replaceKeyRegister(mapping: NonAlphaKeys): void {
 /*
  * PUBLIC
  * Allows useKeybinds hooks to process their configurations.  If no match is found
- * no command will be set.  However, if another configuration had previously set
- * set a command in response to EVT.keypress then that command will not be reset.
- * Every EVT.keypress event clears the command, but once a command is set it is
+ * no event will be set.  However, if another configuration had previously set
+ * set a event in response to EVT.keypress then that event will not be reset.
+ * Every EVT.keypress event clears the event, but once a event is set it is
  * immutable until the next EVT.keypress event
  * */
 function processConfig(config: KeyBinds): void {
-    if (state.commandSet) return;
+    if (state.eventSet) return;
 
     /* Is there a non alphanumeric keypress?  We need to know so that bindings
      * such as just "f" should not trigger ctrl + f for example. */
     const hasNonAlphaKey = Object.values(state.keys).some((b) => b);
 
-    for (const command in config) {
-        const binding = config[command];
+    for (const event in config) {
+        const binding = config[event];
 
         let match = false;
         if (Array.isArray(binding)) {
@@ -248,7 +250,7 @@ function processConfig(config: KeyBinds): void {
             match = checkMatch(binding, hasNonAlphaKey);
         }
 
-        if (match) setCommand(command);
+        if (match) setEvent(event);
     }
 }
 
@@ -315,14 +317,14 @@ function checkNotMatch(binding: Binding): boolean {
  * that notifies all hooks that the state has been updated
  * */
 function handleKeypress(stdin: string): void {
-    state.commandSet = false;
+    state.eventSet = false;
     state.eventEmitted = false;
-    state.command = null;
+    state.event = null;
     state.ctrlKeys = "";
 
     /* Handle sigint before all else */
     if (stdin === KEYCODES.sigint) {
-        EMITTER.removeAllListeners();
+        REGISTER_EMITTER.removeAllListeners();
         process.stdin.pause();
         process.exit();
     }
@@ -386,7 +388,7 @@ function handleKeypress(stdin: string): void {
         }
     }
 
-    EMITTER.emit(EVT.keypress, stdin);
+    REGISTER_EMITTER.emit(EVT.keypress, stdin);
 }
 
 /*
@@ -401,7 +403,7 @@ function listen(): void {
 
     process.stdin.resume();
     process.stdin.on(EVT.data, handleKeypress);
-    EMITTER.on(EVT.appStatus, handleAppStatus);
+    REGISTER_EMITTER.on(EVT.appStatus, handleAppStatus);
 
     state.listening = true;
 }
@@ -410,11 +412,11 @@ function listen(): void {
  * Removes all extra listeners so that the app can exit
  * */
 function pause(): void {
-    HOOK_EMITTER.removeAllListeners();
-    EMITTER.removeAllListeners(EVT.mounted);
+    APP_EMITTER.removeAllListeners();
+    REGISTER_EMITTER.removeAllListeners(EVT.mounted);
 
     process.stdin.removeListener(EVT.data, handleKeypress);
-    EMITTER.removeListener(EVT.appStatus, handleAppStatus);
+    REGISTER_EMITTER.removeListener(EVT.appStatus, handleAppStatus);
 
     /* Before pausing process.stdin ensure that we aren't interfering with any
      * other listeners outside the scope of this module */
@@ -438,7 +440,7 @@ function pause(): void {
  * components are unmounted.
  * */
 function handleAppStatus(): void {
-    const keypressListeners = EMITTER.listenerCount(EVT.keypress);
+    const keypressListeners = REGISTER_EMITTER.listenerCount(EVT.keypress);
 
     if (!keypressListeners) {
         pause();
@@ -451,7 +453,7 @@ const Register = {
     pause,
     subscribe,
     processConfig,
-    getCommand,
+    getEvent,
     getCharRegister,
     addEventListener,
     emit,

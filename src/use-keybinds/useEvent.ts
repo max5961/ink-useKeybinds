@@ -51,14 +51,14 @@ export function useMultipleEventsWithoutCtxChecks(listeners: Listener[]): void {
     }, []);
 }
 
+export interface UseEvent<T = any> {
+    (cmd: keyof T, handler: (stdin: string) => unknown): void;
+}
+
 export type Listener = {
     cmd: string;
     handler: (...args: any[]) => unknown;
 };
-
-export interface UseEvent<T = any> {
-    (cmd: keyof T, handler: (stdin: string) => unknown): void;
-}
 
 export type MultipleListeners<T extends KeyBinds = any> = {
     cmd: KeyOf<T>;

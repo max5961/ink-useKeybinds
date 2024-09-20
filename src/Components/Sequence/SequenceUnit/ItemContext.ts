@@ -1,10 +1,7 @@
 import { KeyBinds } from "../../../use-keybinds/useKeybinds.js";
 import { createContext, useContext } from "react";
 
-export type ItemContext<
-    KeyBindsType extends KeyBinds = any,
-    ItemsType extends any[] = any,
-> = {
+export type ItemContext<ItemsType extends any[] = any> = {
     items: ItemsType;
     isFocus: boolean;
     index: number;
@@ -13,9 +10,8 @@ export type ItemContext<
 export const ItemContext = createContext<ItemContext | null>(null);
 
 export function useItem<
-    KeyBindsType extends KeyBinds = any,
     ItemsType extends any[] = any,
->(): ItemContext<KeyBindsType, ItemsType> {
+>(): ItemContext<ItemsType> & { item: ItemsType[number] } {
     const context = useContext(ItemContext);
 
     if (!context) {
@@ -24,22 +20,13 @@ export function useItem<
         );
     }
 
-    return context;
-}
+    const items = context.items;
+    const index = context.index;
+    const isFocus = context.isFocus;
+    const item = items[index];
 
-// if (type === "ITEMS") {
-//     return (
-//         <ItemContext.Provider
-//             value={{
-//                 isFocus,
-//                 index,
-//                 items,
-//             }}
-//         >
-//             {getUnits()}
-//         </ItemContext.Provider>
-//     );
-// }
+    return { items, index, isFocus, item };
+}
 
 /*
  * When creating event listeners, we can safely assume that if there is no item

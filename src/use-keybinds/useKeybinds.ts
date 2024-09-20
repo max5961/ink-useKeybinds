@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Register, { EVT } from "./Register.js";
 import { Key } from "./Keycodes.js";
 import { randomUUID } from "crypto";
-import { Priority, useKeybindPriority } from "./KeybindProcessingGate.js";
+import ProcessingGate, { Priority } from "./ProcessingGate.js";
 import { usePageFocus } from "../Components/Sequence/SequenceUnit/PageContext.js";
 import { useItemFocus } from "../Components/Sequence/SequenceUnit/ItemContext.js";
 
@@ -37,8 +37,6 @@ type Return = StdinData;
 export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
     opts = { trackState: false, priority: "default", ...opts };
 
-    const ProcessingGate = useKeybindPriority();
-
     const PRIORITY = opts.priority || "default";
     const [ID] = useState(randomUUID());
 
@@ -47,28 +45,20 @@ export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
         event: "",
     });
 
-    /*
-     * If not already listening to the stdin stream, start listening
-     * */
     if (PRIORITY !== "never") {
         Register.listen();
     }
 
     const isPageFocus = usePageFocus();
     const isItemFocus = useItemFocus();
-    const canProcess =
-        ProcessingGate.canProcess(ID, PRIORITY) && isPageFocus && isItemFocus;
 
-    /*
-     * Unsubscribe and resubscribe this hook to keypress events every render so
-     * that there aren't any untracked listeners
-     * */
+    // Unsubscribe then resubscribe processing
     const unsubscribe = useRef<() => void>(() => {});
     unsubscribe.current();
-    if (canProcess) {
-        unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
-    }
+    unsubscribe.current = Register.subscribe(EVT.keypress, handleStdin);
 
+    // In the event of an error that prevents mounting, this will remove listeners
+    // so that the app exits naturally without requiring sigint
     const renderCount = useRef(0);
     if (++renderCount.current === 1) {
         Register.checkSuccessfulMount();
@@ -89,7 +79,7 @@ export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
     }, [opts.priority]);
 
     useEffect(() => {
-        if (canProcess) {
+        if (ProcessingGate.canProcess(ID, PRIORITY)) {
             return;
         }
 
@@ -99,10 +89,16 @@ export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
     }, [opts.priority]);
 
     function handleStdin(stdin: string) {
-        Register.processConfig(kbConfig);
+        if (
+            ProcessingGate.canProcess(ID, PRIORITY) &&
+            isPageFocus &&
+            isItemFocus
+        ) {
+            Register.processConfig(kbConfig);
+        }
 
         const register = Register.getCharRegister();
-        const event = Register.getCommand();
+        const event = Register.getEvent();
 
         if (opts?.trackState) {
             setData({
@@ -111,7 +107,8 @@ export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
             });
         }
 
-        // Only emits if an event has not already been emitted this processing cycle
+        // If an event has not already been processed and event exists, notify
+        // subscribers created by useEvent hook
         Register.emit(event, stdin);
     }
 

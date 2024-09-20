@@ -36,134 +36,134 @@ describe("ctrl + lowercase a - z", () => {
     it(`ctrl + a`, () => {
         Register.handleKeypress("\u0001");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlA");
+        expect(Register.getEvent()).toBe("ctrlA");
     });
     it("ctrl + b", () => {
         Register.handleKeypress("\u0002");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlB");
+        expect(Register.getEvent()).toBe("ctrlB");
     });
     // ------ This will trigger a SIGINT -----
     // it("ctrl + c", () => {
     //     Register.handleKeypress("\u0003");
     //     Register.processConfig(ctrl_plus_letters);
-    //     console.log(Register.getCommand());
-    //     expect(Register.getCommand()).toBe("ctrlC");
+    //     console.log(Register.getEvent());
+    //     expect(Register.getEvent()).toBe("ctrlC");
     // });
     it("ctrl + d", () => {
         Register.handleKeypress("\u0004");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlD");
+        expect(Register.getEvent()).toBe("ctrlD");
     });
     it("ctrl + e", () => {
         Register.handleKeypress("\u0005");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlE");
+        expect(Register.getEvent()).toBe("ctrlE");
     });
     it("ctrl + f", () => {
         Register.handleKeypress("\u0006");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlF");
+        expect(Register.getEvent()).toBe("ctrlF");
     });
     it("ctrl + g", () => {
         Register.handleKeypress("\u0007");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlG");
+        expect(Register.getEvent()).toBe("ctrlG");
     });
     it("ctrl + h", () => {
         Register.handleKeypress("\u0008");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlH");
+        expect(Register.getEvent()).toBe("ctrlH");
     });
     it("ctrl + i", () => {
         Register.handleKeypress("\u0009");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlI");
+        expect(Register.getEvent()).toBe("ctrlI");
     });
     it("ctrl + j", () => {
         Register.handleKeypress("\u000A");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlJ");
+        expect(Register.getEvent()).toBe("ctrlJ");
     });
     it("ctrl + k", () => {
         Register.handleKeypress("\u000B");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlK");
+        expect(Register.getEvent()).toBe("ctrlK");
     });
     it("ctrl + l", () => {
         Register.handleKeypress("\u000C");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlL");
+        expect(Register.getEvent()).toBe("ctrlL");
     });
     it("ctrl + m", () => {
         Register.handleKeypress("\u000D");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlM");
+        expect(Register.getEvent()).toBe("ctrlM");
     });
     it("ctrl + n", () => {
         Register.handleKeypress("\u000E");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlN");
+        expect(Register.getEvent()).toBe("ctrlN");
     });
     it("ctrl + o", () => {
         Register.handleKeypress("\u000F");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlO");
+        expect(Register.getEvent()).toBe("ctrlO");
     });
     it("ctrl + p", () => {
         Register.handleKeypress("\u0010");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlP");
+        expect(Register.getEvent()).toBe("ctrlP");
     });
     it("ctrl + q", () => {
         Register.handleKeypress("\u0011");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlQ");
+        expect(Register.getEvent()).toBe("ctrlQ");
     });
     it("ctrl + r", () => {
         Register.handleKeypress("\u0012");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlR");
+        expect(Register.getEvent()).toBe("ctrlR");
     });
     it("ctrl + s", () => {
         Register.handleKeypress("\u0013");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlS");
+        expect(Register.getEvent()).toBe("ctrlS");
     });
     it("ctrl + t", () => {
         Register.handleKeypress("\u0014");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlT");
+        expect(Register.getEvent()).toBe("ctrlT");
     });
     it("ctrl + u", () => {
         Register.handleKeypress("\u0015");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlU");
+        expect(Register.getEvent()).toBe("ctrlU");
     });
     it("ctrl + v", () => {
         Register.handleKeypress("\u0016");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlV");
+        expect(Register.getEvent()).toBe("ctrlV");
     });
     it("ctrl + w", () => {
         Register.handleKeypress("\u0017");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlW");
+        expect(Register.getEvent()).toBe("ctrlW");
     });
     it("ctrl + x", () => {
         Register.handleKeypress("\u0018");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlX");
+        expect(Register.getEvent()).toBe("ctrlX");
     });
     it("ctrl + y", () => {
         Register.handleKeypress("\u0019");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlY");
+        expect(Register.getEvent()).toBe("ctrlY");
     });
     it("ctrl + z", () => {
         Register.handleKeypress("\u001A");
         Register.processConfig(ctrl_plus_letters);
-        expect(Register.getCommand()).toBe("ctrlZ");
+        expect(Register.getEvent()).toBe("ctrlZ");
     });
 });
 
@@ -292,56 +292,56 @@ describe("Keybinds trigger commands correctly and clear char register after", ()
     it("'f' triggers 'foo'", () => {
         Register.handleKeypress("f");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("foo");
+        expect(Register.getEvent()).toBe("foo");
     });
     it("'F' triggers 'foo'", () => {
         Register.handleKeypress("F");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("foo");
+        expect(Register.getEvent()).toBe("foo");
     });
     it("'!@' triggers 'foo'", () => {
         Register.handleKeypress("!");
         Register.handleKeypress("@");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("foo");
+        expect(Register.getEvent()).toBe("foo");
     });
     it("'#$' triggers 'foo'", () => {
         Register.handleKeypress("#");
         Register.handleKeypress("$");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("foo");
+        expect(Register.getEvent()).toBe("foo");
     });
 
     // bar
     it("'ctrl + b' triggers 'bar'", () => {
         Register.handleKeypress("\u0002");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("bar");
+        expect(Register.getEvent()).toBe("bar");
     });
     it("'bb' triggers 'bar'", () => {
         Register.handleKeypress("b");
         Register.handleKeypress("b");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("bar");
+        expect(Register.getEvent()).toBe("bar");
     });
     it("'%^' triggers 'bar'", () => {
         Register.handleKeypress("%");
         Register.handleKeypress("^");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("bar");
+        expect(Register.getEvent()).toBe("bar");
     });
 
     // baz
     it("'f1' triggers 'baz'", () => {
         Register.handleKeypress(KEYCODES.f1);
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("baz");
+        expect(Register.getEvent()).toBe("baz");
     });
     it("'Ba' triggers 'baz'", () => {
         Register.handleKeypress("B");
         Register.handleKeypress("a");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("baz");
+        expect(Register.getEvent()).toBe("baz");
     });
 
     // quz
@@ -349,13 +349,13 @@ describe("Keybinds trigger commands correctly and clear char register after", ()
         Register.handleKeypress("q");
         Register.handleKeypress("Q");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("quz");
+        expect(Register.getEvent()).toBe("quz");
     });
     it("'QQ' triggers 'quz'", () => {
         Register.handleKeypress("Q");
         Register.handleKeypress("Q");
         Register.processConfig(foobar);
-        expect(Register.getCommand()).toBe("quz");
+        expect(Register.getEvent()).toBe("quz");
     });
 });
 
@@ -363,7 +363,7 @@ describe("notKey, notInput, and empty object", () => {
     it("empty object should trigger on any key press", () => {
         Register.handleKeypress("a");
         Register.processConfig({ press_any_key: {} });
-        expect(Register.getCommand()).toBe("press_any_key");
+        expect(Register.getEvent()).toBe("press_any_key");
     });
 
     const cfg1 = {
@@ -374,18 +374,18 @@ describe("notKey, notInput, and empty object", () => {
     it("anything but escape or return triggers command", () => {
         Register.handleKeypress("b");
         Register.processConfig(cfg1);
-        expect(Register.getCommand()).toBe("not_esc_or_return");
+        expect(Register.getEvent()).toBe("not_esc_or_return");
     });
 
     it("esc or return triggers command", () => {
         Register.handleKeypress(KEYCODES.esc);
         Register.processConfig(cfg1);
-        expect(Register.getCommand()).toBe("esc_or_return");
+        expect(Register.getEvent()).toBe("esc_or_return");
     });
 
     it("any key but 'a'", () => {
         Register.handleKeypress("b");
         Register.processConfig({ not_a: { notInput: ["a"] } });
-        expect(Register.getCommand()).toBe("not_a");
+        expect(Register.getEvent()).toBe("not_a");
     });
 });
