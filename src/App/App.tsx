@@ -7,8 +7,11 @@ import { useList } from "../Components/List/useList.js";
 import { SequenceTypes } from "../Components/Sequence/Sequence.js";
 import { List } from "../Components/List/List.js";
 import { useItem } from "../Components/Sequence/SequenceUnit/ItemContext.js";
-import { useFormInput } from "../Components/Input/useFormInput.js";
-import { Input } from "../Components/Input/Input.js";
+import { useTextInput } from "../Components/Input/useTextInput.js";
+import { TextInput } from "../Components/Input/TextInput.js";
+import Register from "../use-keybinds/Register.js";
+
+Register.setRegisterSize(2);
 
 const kbs1 = {
     foo: { input: "f" },
@@ -29,7 +32,9 @@ const kbs2 = {
 //     baz: { input: "0", foo: "yes" },
 // };
 
+let i = 0;
 export default function App(): React.ReactNode {
+    console.log(++i);
     const [items, setItems] = useState<Item[]>(initialItems);
     const { exit } = useApp();
 
@@ -71,14 +76,6 @@ export default function App(): React.ReactNode {
         };
     });
 
-    useEffect(() => {
-        console.log("mounting....");
-
-        return () => {
-            console.log("unmounting app...");
-        };
-    }, []);
-
     return (
         <Box borderStyle="round" width="50">
             <List items={listItems} listState={listState} />
@@ -93,16 +90,16 @@ function ListItem({
 }): React.ReactNode {
     const { items, item, index, isFocus } = useItem<Item[]>();
 
-    const text = useFormInput({
+    const text = useTextInput({
         enter: { input: "i" },
         exit: { key: "return" },
-        defaultVal: item.name,
-        // active: isFocus,
+        defaultValue: item.name,
+        autoEnter: true,
     });
 
     function onSubmit() {
         const copy = items.slice();
-        copy[index] = { ...item, name: text.str };
+        copy[index] = { ...item, name: text.value };
         setItems(copy);
     }
 
@@ -111,7 +108,7 @@ function ListItem({
 
     return (
         <Box display="flex">
-            <Input text={text} color={color} onSubmit={onSubmit} />
+            <TextInput text={text} color={color} onSubmit={onSubmit} />
             <Text color={color}>{cmpIcon}</Text>
         </Box>
     );
@@ -135,64 +132,3 @@ function Nested(): React.ReactNode {
 
     return null;
 }
-
-// import React from "react";
-// import PageOne from "./PageOne.js";
-// import PageTwo from "./PageTwo.js";
-// import PageThree from "./PageThree.js";
-// import { useWindow } from "../Components/Window/useWindow.js";
-// import { Window } from "../Components/Window/Window.js";
-// import { KeyBinds, useKeybinds } from "../use-keybinds/useKeybinds.js";
-// import { useApp } from "ink";
-// import { useOnApp } from "../use-keybinds/KeybindsProvider.js";
-// import { keybinds } from "./initialData.js";
-//
-// const pages = [
-//     <PageOne key="PageOne" />,
-//     <PageTwo key="PageTwo" />,
-//     <PageThree key="PageThree" />,
-// ];
-//
-// const pageNav = {
-//     pageOne: { input: "1" },
-//     pageTwo: { input: "2" },
-//     pageThree: { input: "3" },
-//     nextPage: [{ key: "right" }, { key: "ctrl", input: "j" }],
-//     prevPage: [{ key: "left" }, { key: "ctrl", input: "k" }],
-// } satisfies KeyBinds;
-//
-// export default function App(): React.ReactNode {
-//     const { exit } = useApp();
-//
-//     const { windowState, windowUtil } = useWindow(pages, {
-//         circular: true,
-//     });
-//     const { onEvent } = useKeybinds(pageNav);
-//     const { onApp } = useOnApp<typeof keybinds>();
-//
-//     onEvent("pageOne", () => {
-//         windowUtil.goToPage(0);
-//     });
-//
-//     onEvent("pageTwo", () => {
-//         windowUtil.goToPage(1);
-//     });
-//
-//     onEvent("pageThree", () => {
-//         windowUtil.goToPage(2);
-//     });
-//
-//     onEvent("nextPage", () => {
-//         windowUtil.nextPage();
-//     });
-//
-//     onEvent("prevPage", () => {
-//         windowUtil.prevPage();
-//     });
-//
-//     onApp("quit", () => {
-//         exit();
-//     });
-//
-//     return <Window pages={pages} windowState={windowState} scrollBar={true} />;
-// }

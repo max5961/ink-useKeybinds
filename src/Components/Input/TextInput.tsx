@@ -1,12 +1,12 @@
 import React from "react";
 import { Text } from "ink";
-import { UseFormReturn } from "./useFormInput.js";
-import { Props } from "../../../node_modules/ink/build/components/Text.js";
+import { UseFormReturn } from "./useTextInput.js";
+import { Props as TextProps } from "../../../node_modules/ink/build/components/Text.js";
 import chalk from "chalk";
 
-type Color = Exclude<Props["color"], undefined>;
+type Color = Exclude<TextProps["color"], undefined>;
 
-type InputProps = {
+type Props = {
     text: UseFormReturn;
     mask?: boolean;
     onSubmit?: (stdin: string) => unknown;
@@ -24,34 +24,33 @@ type InputProps = {
  * Add ref to Box wrapping Text that measures the width and slices/shifts text so
  * that excess chars at the end stay within viewing window during editing
  *
- * Consider that Input should always be single line truncated component and that
- * TextArea should be the same as Input but with wrap and handles more key presses
- * such as return and arrow keys while the normal Input would ignore those keys
+ * Consider that TextInput should always be single line truncated component and that
+ * TextArea should be the same as TextInput but with wrap and handles more key presses
+ * such as return and arrow keys while the normal TextInput would ignore those keys
  * for adding to the value string
  *
- * useFormInput would still handle both Input and TextArea
+ * useFormInput would still handle both TextInput and TextArea
  *
  * TextArea could have height/width props and excess lines could be sliced away
  * from the view during editing which would be easy to calculate with a simple
- * for loop.  The same as done in the Input component and this implies that the
+ * for loop.  The same as done in the TextInput component and this implies that the
  * TextArea would have wrap on, but would detect when to insert a \n automatically
  * */
 
-export function Input({
+export function TextInput({
     text,
     mask,
     placeholder,
     onSubmit,
     onEnter,
     onKeypress,
-    color = "cyan",
-    cursorColor = "blue",
-}: InputProps): React.ReactNode {
-    let { str, idx, emitter } = text;
+    color = "",
+    cursorColor = "",
+}: Props): React.ReactNode {
+    let { value, idx, emitter } = text;
 
-    if (color === "") {
-        color = "white";
-    }
+    color = normalizeColor(color);
+    cursorColor = normalizeColor(cursorColor);
 
     emitter.removeAllListeners();
     onSubmit && emitter.on("submit", onSubmit);
@@ -61,12 +60,12 @@ export function Input({
     let before: string, cursor: string, after: string;
     before = cursor = after = "";
 
-    for (let i = 0; i < str.length; ++i) {
-        const char = mask ? "*" : str[i];
+    for (let i = 0; i < value.length; ++i) {
+        const char = mask ? "*" : value[i];
 
         if (i < idx) {
             before += char;
-        } else if (i === idx && str[i] !== "\n") {
+        } else if (i === idx && value[i] !== "\n") {
             cursor += char;
         } else {
             after += char;
@@ -74,7 +73,7 @@ export function Input({
     }
 
     // Prevent collapsing height
-    if (!str.length && !text.insert) {
+    if (!value.length && !text.insert) {
         return (
             <Text color="grey" dimColor>
                 {placeholder || " "}
@@ -103,4 +102,9 @@ export function Input({
     const val = `${before}${cursor}${after}`;
 
     return <Text>{val}</Text>;
+}
+
+function normalizeColor(color: string): string {
+    if (color === "" || !chalk[color]) return "white";
+    return color;
 }

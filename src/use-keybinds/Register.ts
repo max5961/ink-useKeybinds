@@ -22,6 +22,7 @@ type State = {
     event: string | null;
     eventSet: boolean;
     eventEmitted: boolean;
+    registerSize: number;
 };
 
 const state: State = {
@@ -32,6 +33,7 @@ const state: State = {
     event: null,
     eventSet: false,
     eventEmitted: false,
+    registerSize: 2,
 };
 
 export const EVT = {
@@ -46,7 +48,7 @@ export const EVT = {
  * that have subscribed to keypress events within the useKeybinds hook
  * */
 const REGISTER_EMITTER = new EventEmitter();
-REGISTER_EMITTER.setMaxListeners(15);
+REGISTER_EMITTER.setMaxListeners(30);
 
 /*
  * Emits events within the App that useEvent hooks can respond to.
@@ -187,6 +189,13 @@ function getCharRegister(): string {
 }
 
 /*
+ * PUBLIC
+ * */
+function setRegisterSize(n: number): void {
+    state.registerSize = Math.max(1, n);
+}
+
+/*
  * PRIVATE
  * */
 function setEvent(event: string | number): void {
@@ -204,7 +213,7 @@ function setEvent(event: string | number): void {
 function pushCharRegister(s: string): void {
     if (s === "") return;
 
-    if (state.chars.length >= 2) {
+    if (state.chars.length >= state.registerSize) {
         state.chars = "";
     }
 
@@ -459,6 +468,7 @@ const Register = {
     emit,
     hasMounted,
     checkSuccessfulMount,
+    setRegisterSize,
 
     // For testing
     handleKeypress,

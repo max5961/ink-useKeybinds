@@ -90,9 +90,9 @@ export function useKeybinds(kbConfig: KeyBinds, opts?: Opts): Return {
 
     function handleStdin(stdin: string) {
         if (
-            ProcessingGate.canProcess(ID, PRIORITY) &&
+            isItemFocus &&
             isPageFocus &&
-            isItemFocus
+            ProcessingGate.canProcess(ID, PRIORITY)
         ) {
             Register.processConfig(kbConfig);
         }
