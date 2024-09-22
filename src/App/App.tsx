@@ -32,9 +32,7 @@ const kbs2 = {
 //     baz: { input: "0", foo: "yes" },
 // };
 
-let i = 0;
 export default function App(): React.ReactNode {
-    console.log(++i);
     const [items, setItems] = useState<Item[]>(initialItems);
     const { exit } = useApp();
 
@@ -90,17 +88,23 @@ function ListItem({
 }): React.ReactNode {
     const { items, item, index, isFocus } = useItem<Item[]>();
 
-    const text = useTextInput({
-        enter: { input: "i" },
+    const { text, inputState, clearText } = useTextInput({
+        enter: [{ input: "i" }, { input: "cc" }],
         exit: { key: "return" },
         defaultValue: item.name,
-        autoEnter: true,
+        // autoEnter: true,
     });
 
     function onSubmit() {
         const copy = items.slice();
-        copy[index] = { ...item, name: text.value };
+        copy[index] = { ...item, name: text };
         setItems(copy);
+    }
+
+    function onEnter(stdin: string) {
+        if (stdin === "c") {
+            clearText();
+        }
     }
 
     const cmpIcon = item.completed ? " " : "  ";
@@ -108,7 +112,12 @@ function ListItem({
 
     return (
         <Box display="flex">
-            <TextInput text={text} color={color} onSubmit={onSubmit} />
+            <TextInput
+                inputState={inputState}
+                color={color}
+                onSubmit={onSubmit}
+                onEnter={onEnter}
+            />
             <Text color={color}>{cmpIcon}</Text>
         </Box>
     );

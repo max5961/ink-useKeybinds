@@ -1,13 +1,13 @@
 import React from "react";
 import { Text } from "ink";
-import { UseFormReturn } from "./useTextInput.js";
+import { Return } from "./useTextInput.js";
 import { Props as TextProps } from "../../../node_modules/ink/build/components/Text.js";
 import chalk from "chalk";
 
 type Color = Exclude<TextProps["color"], undefined>;
 
 type Props = {
-    text: UseFormReturn;
+    inputState: Return["inputState"];
     mask?: boolean;
     onSubmit?: (stdin: string) => unknown;
     onEnter?: (stdin: string) => unknown;
@@ -27,7 +27,7 @@ type Props = {
  * Consider that TextInput should always be single line truncated component and that
  * TextArea should be the same as TextInput but with wrap and handles more key presses
  * such as return and arrow keys while the normal TextInput would ignore those keys
- * for adding to the value string
+ * for adding to the text string
  *
  * useFormInput would still handle both TextInput and TextArea
  *
@@ -38,7 +38,7 @@ type Props = {
  * */
 
 export function TextInput({
-    text,
+    inputState,
     mask,
     placeholder,
     onSubmit,
@@ -47,7 +47,7 @@ export function TextInput({
     color = "",
     cursorColor = "",
 }: Props): React.ReactNode {
-    let { value, idx, emitter } = text;
+    let { text, idx, emitter } = inputState;
 
     color = normalizeColor(color);
     cursorColor = normalizeColor(cursorColor);
@@ -60,12 +60,12 @@ export function TextInput({
     let before: string, cursor: string, after: string;
     before = cursor = after = "";
 
-    for (let i = 0; i < value.length; ++i) {
-        const char = mask ? "*" : value[i];
+    for (let i = 0; i < text.length; ++i) {
+        const char = mask ? "*" : text[i];
 
         if (i < idx) {
             before += char;
-        } else if (i === idx && value[i] !== "\n") {
+        } else if (i === idx && text[i] !== "\n") {
             cursor += char;
         } else {
             after += char;
@@ -73,7 +73,7 @@ export function TextInput({
     }
 
     // Prevent collapsing height
-    if (!value.length && !text.insert) {
+    if (!text.length && !inputState.insert) {
         return (
             <Text color="grey" dimColor>
                 {placeholder || " "}
@@ -88,7 +88,7 @@ export function TextInput({
 
     before = chalk[color](before);
 
-    if (text.insert) {
+    if (inputState.insert) {
         cursor = chalk.inverse(chalk[cursorColor](cursor));
     } else {
         // cursor = chalk[color](" ");

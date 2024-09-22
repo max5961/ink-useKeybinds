@@ -10,11 +10,10 @@ import EventEmitter from "events";
 import { useEvent } from "../../use-keybinds/useEvent.js";
 import FormKeys, { EVENTS } from "./FormKeys.js";
 import { Priority } from "../../use-keybinds/ProcessingGate.js";
-import { useItemFocus } from "../Sequence/SequenceUnit/ItemContext.js";
-import { usePageFocus } from "../Sequence/SequenceUnit/PageContext.js";
+import { useIsFocus } from "../Sequence/SequenceUnit/useIsFocus.js";
 
-export type InputState = {
-    value: string;
+type State = {
+    text: string;
     idx: number;
     insert: boolean;
     stdin: string | null;
@@ -28,27 +27,36 @@ type Opts = {
     autoEnter?: boolean;
 };
 
-export type UseFormReturn = {
-    emitter: EventEmitter;
+export type Return = {
+    text: string;
     clearText: () => void;
     setText: (newText: string) => void;
-} & InputState;
+    inputState: State & { emitter: EventEmitter };
+};
 
-export function useTextInput(opts?: Opts): UseFormReturn {
+export function useTextInput(opts?: Opts): Return {
     const ACTIVE = opts?.active === undefined ? true : opts?.active;
 
     const [ID] = useState(randomUUID());
     const [emitter] = useState(new EventEmitter());
 
-    const isItemFocus = useItemFocus();
-    const isPageFocus = usePageFocus();
+    const isFocus = useIsFocus();
 
-    const [state, setState] = useState<InputState>({
-        value: opts?.defaultValue || "",
+    const [state, setState] = useState<State>({
+        text: opts?.defaultValue || "",
         idx: opts?.defaultValue?.length || 0,
-        insert: (opts?.autoEnter && isPageFocus && isItemFocus) || false,
+        insert: (opts?.autoEnter && isFocus) || false,
         stdin: null,
     });
+
+    useEffect(() => {
+        if (!isFocus) return;
+
+        if (opts?.autoEnter && !state.insert) {
+            setState({ ...state, insert: true });
+            emitter.emit("enter", state.stdin);
+        }
+    }, [isFocus]);
 
     const firstRender = useRef(true);
     useEffect(() => {
@@ -81,7 +89,7 @@ export function useTextInput(opts?: Opts): UseFormReturn {
 
     useEvent(EXIT, (stdin: string) => {
         setState((prev) => {
-            return { ...prev, stdin, insert: false, idx: prev.value.length };
+            return { ...prev, stdin, insert: false, idx: prev.text.length };
         });
     });
 
@@ -92,7 +100,7 @@ export function useTextInput(opts?: Opts): UseFormReturn {
     });
 
     useEvent(EVENTS.right, () => {
-        if (state.insert && state.idx < state.value.length) {
+        if (state.insert && state.idx < state.text.length) {
             setState({ ...state, idx: state.idx + 1 });
         }
     });
@@ -100,20 +108,19 @@ export function useTextInput(opts?: Opts): UseFormReturn {
     useEvent(EVENTS.tab, () => {
         if (!state.insert) return;
 
-        const nextStr = `${state.value}    `;
+        const nextStr = `${state.text}    `;
 
-        setState({ ...state, idx: state.idx + 4, value: nextStr });
+        setState({ ...state, idx: state.idx + 4, text: nextStr });
     });
 
     useEvent(EVENTS.backspace, () => {
         if (!state.insert) return;
-        const { value, idx } = state;
+        const { text, idx } = state;
 
         const nextIdx = idx > 0 ? idx - 1 : 0;
-        const nextStr =
-            value.slice(0, idx > 0 ? idx - 1 : 0) + value.slice(idx);
+        const nextStr = text.slice(0, idx > 0 ? idx - 1 : 0) + text.slice(idx);
 
-        setState({ ...state, value: nextStr, idx: nextIdx });
+        setState({ ...state, text: nextStr, idx: nextIdx });
     });
 
     useEvent(EVENTS.keypress, (stdin: string) => {
@@ -128,10 +135,10 @@ export function useTextInput(opts?: Opts): UseFormReturn {
             }
         }
 
-        let nextStringInput = state.value;
+        let nextStringInput = state.text;
 
         if (state.insert) {
-            nextStringInput = `${state.value.slice(0, state.idx)}${stdin}${state.value.slice(state.idx)}`;
+            nextStringInput = `${state.text.slice(0, state.idx)}${stdin}${state.text.slice(state.idx)}`;
         }
 
         const nextIdx = stdin ? state.idx + stdin.length : state.idx;
@@ -139,7 +146,7 @@ export function useTextInput(opts?: Opts): UseFormReturn {
         if (nextIdx !== state.idx && state.insert) {
             setState({
                 ...state,
-                value: nextStringInput,
+                text: nextStringInput,
                 idx: nextIdx,
             });
         }
@@ -147,29 +154,34 @@ export function useTextInput(opts?: Opts): UseFormReturn {
 
     function clearText(): void {
         setState((prev) => {
-            return { ...prev, value: "", idx: 0 };
+            return { ...prev, text: "", idx: 0 };
         });
     }
 
     function setText(newText: string): void {
         setState((prev) => {
-            return { ...prev, value: newText, idx: newText.length };
+            return { ...prev, text: newText, idx: newText.length };
         });
     }
 
-    return { ...state, emitter, clearText, setText };
+    return {
+        text: state.text,
+        inputState: { ...state, emitter },
+        clearText,
+        setText,
+    };
 }
 
 // insert.useEvent("returnKey", () => {
 //     if (!state.insert) return;
 //
-//     if (state.value.match(/\n {4}[\w\s]+$/gm)) {
+//     if (state.text.match(/\n {4}[\w\s]+$/gm)) {
 //         setState({
 //             ...state,
-//             value: `${state.value}\n    `,
+//             text: `${state.text}\n    `,
 //             idx: state.idx + 5,
 //         });
 //     } else {
-//         setState({ ...state, idx: state.idx + 1, value: `${state.value}\n` });
+//         setState({ ...state, idx: state.idx + 1, text: `${state.text}\n` });
 //     }
 // });
