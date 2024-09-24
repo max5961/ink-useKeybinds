@@ -1,60 +1,51 @@
 import { useEffect, useRef, useState } from "react";
-import {
-    useKeybinds,
-    Binding,
-    KeyBinds,
-} from "../../use-keybinds/useKeybinds.js";
+import { useKeybinds, KeyBinds } from "../../use-keybinds/useKeybinds.js";
 import { KEYCODES } from "../../use-keybinds/Keycodes.js";
 import { randomUUID } from "crypto";
-import EventEmitter from "events";
 import { useEvent } from "../../use-keybinds/useEvent.js";
 import FormKeys, { EVENTS } from "./FormKeys.js";
 import { Priority } from "../../use-keybinds/ProcessingGate.js";
 import { useIsFocus } from "../Sequence/SequenceUnit/useIsFocus.js";
+import { TextInputTypes } from "./TextInput.js";
+import { useFormContext } from "../Form/Form.js";
 
 type State = {
-    text: string;
+    value: string;
     idx: number;
     insert: boolean;
     stdin: string | null;
 };
 
-type Opts = {
-    enter?: Binding | Binding[];
-    exit?: Binding | Binding[];
-    defaultValue?: string;
-    active?: boolean;
-    autoEnter?: boolean;
-};
+type Args = TextInputTypes.Props;
 
-export type Return = {
-    text: string;
-    clearText: () => void;
-    setText: (newText: string) => void;
-    inputState: State & { emitter: EventEmitter };
-};
+export type Return = Omit<State, "value"> & { nextValue: string };
 
-export function useTextInput(opts?: Opts): Return {
-    const ACTIVE = opts?.active === undefined ? true : opts?.active;
+export function useTextInput(args: Args): Return {
+    const formContext = useFormContext();
 
+    function updateFormValues(nextValue: string) {
+        if (!formContext || !args.name) return;
+
+        formContext.values[args.name] = nextValue;
+    }
+
+    const ACTIVE = args?.active === undefined ? true : args?.active;
     const [ID] = useState(randomUUID());
-    const [emitter] = useState(new EventEmitter());
 
     const isFocus = useIsFocus();
-
     const [state, setState] = useState<State>({
-        text: opts?.defaultValue || "",
-        idx: opts?.defaultValue?.length || 0,
-        insert: (opts?.autoEnter && isFocus) || false,
+        value: args.value,
+        idx: args.value.length,
+        insert: (args.autoEnter && isFocus) || false,
         stdin: null,
     });
 
     useEffect(() => {
         if (!isFocus) return;
 
-        if (opts?.autoEnter && !state.insert) {
+        if (args?.autoEnter && !state.insert) {
             setState({ ...state, insert: true });
-            emitter.emit("enter", state.stdin);
+            args.onEnter && args.onEnter(state.stdin || "");
         }
     }, [isFocus]);
 
@@ -66,14 +57,20 @@ export function useTextInput(opts?: Opts): Return {
         }
 
         if (state.insert) {
-            emitter.emit("enter", state.stdin);
+            args.onEnter && args.onEnter(state.stdin || "");
         } else {
-            emitter.emit("submit", state.stdin);
+            args.onExit && args.onExit(state.stdin || "");
         }
     }, [state.insert]);
 
-    const [normalKb, ENTER] = FormKeys.getNormalKeybindings(ID, opts?.enter);
-    const [insertKb, EXIT] = FormKeys.getInsertKeybindings(ID, opts?.exit);
+    const [normalKb, ENTER] = FormKeys.getNormalKeybindings(
+        ID,
+        args.enterBinding,
+    );
+    const [insertKb, EXIT] = FormKeys.getInsertKeybindings(
+        ID,
+        args.exitBinding,
+    );
 
     const keybinds: KeyBinds = state.insert ? insertKb : normalKb;
     // prettier-ignore
@@ -85,12 +82,14 @@ export function useTextInput(opts?: Opts): Return {
         setState((prev) => {
             return { ...prev, stdin, insert: true };
         });
+        args.onEnter && args.onEnter(stdin);
     });
 
     useEvent(EXIT, (stdin: string) => {
         setState((prev) => {
-            return { ...prev, stdin, insert: false, idx: prev.text.length };
+            return { ...prev, stdin, insert: false, idx: prev.value.length };
         });
+        args.onExit && args.onExit(stdin);
     });
 
     useEvent(EVENTS.left, () => {
@@ -100,32 +99,52 @@ export function useTextInput(opts?: Opts): Return {
     });
 
     useEvent(EVENTS.right, () => {
-        if (state.insert && state.idx < state.text.length) {
+        if (state.insert && state.idx < state.value.length) {
             setState({ ...state, idx: state.idx + 1 });
         }
     });
 
+    // can pass off form control here
     useEvent(EVENTS.tab, () => {
         if (!state.insert) return;
 
-        const nextStr = `${state.text}    `;
+        if (formContext) {
+            setState({ ...state, insert: false });
+            formContext.nextItem();
+        } else {
+            const nextValue = `${state.value}    `;
+            updateFormValues(nextValue);
+            setState({ ...state, idx: state.idx + 4, value: nextValue });
+        }
+    });
 
-        setState({ ...state, idx: state.idx + 4, text: nextStr });
+    useEvent(EVENTS.down, () => {
+        if (!state.insert || !formContext) return;
+        setState({ ...state, insert: false });
+        formContext.nextItem();
+    });
+
+    useEvent(EVENTS.up, () => {
+        if (!state.insert || !formContext) return;
+        setState({ ...state, insert: false });
+        formContext.prevItem();
     });
 
     useEvent(EVENTS.backspace, () => {
         if (!state.insert) return;
-        const { text, idx } = state;
+        const { value, idx } = state;
 
         const nextIdx = idx > 0 ? idx - 1 : 0;
-        const nextStr = text.slice(0, idx > 0 ? idx - 1 : 0) + text.slice(idx);
+        const nextValue =
+            value.slice(0, idx > 0 ? idx - 1 : 0) + value.slice(idx);
 
-        setState({ ...state, text: nextStr, idx: nextIdx });
+        updateFormValues(nextValue);
+        setState({ ...state, value: nextValue, idx: nextIdx });
     });
 
     useEvent(EVENTS.keypress, (stdin: string) => {
         if (state.insert) {
-            emitter.emit("keypress", stdin);
+            args.onKeypress && args.onKeypress(stdin);
         }
 
         const invalidChars = [KEYCODES.esc, KEYCODES.insert, KEYCODES.return];
@@ -135,53 +154,42 @@ export function useTextInput(opts?: Opts): Return {
             }
         }
 
-        let nextStringInput = state.text;
+        let nextValue = state.value;
 
         if (state.insert) {
-            nextStringInput = `${state.text.slice(0, state.idx)}${stdin}${state.text.slice(state.idx)}`;
+            nextValue = `${state.value.slice(0, state.idx)}${stdin}${state.value.slice(state.idx)}`;
         }
 
         const nextIdx = stdin ? state.idx + stdin.length : state.idx;
 
         if (nextIdx !== state.idx && state.insert) {
+            updateFormValues(nextValue);
             setState({
                 ...state,
-                text: nextStringInput,
+                value: nextValue,
                 idx: nextIdx,
             });
         }
     });
 
-    function clearText(): void {
-        setState((prev) => {
-            return { ...prev, text: "", idx: 0 };
-        });
-    }
-
-    function setText(newText: string): void {
-        setState((prev) => {
-            return { ...prev, text: newText, idx: newText.length };
-        });
-    }
-
     return {
-        text: state.text,
-        inputState: { ...state, emitter },
-        clearText,
-        setText,
+        nextValue: state.value,
+        idx: state.idx,
+        insert: state.insert,
+        stdin: state.stdin,
     };
 }
 
 // insert.useEvent("returnKey", () => {
 //     if (!state.insert) return;
 //
-//     if (state.text.match(/\n {4}[\w\s]+$/gm)) {
+//     if (state.value.match(/\n {4}[\w\s]+$/gm)) {
 //         setState({
 //             ...state,
-//             text: `${state.text}\n    `,
+//             value: `${state.value}\n    `,
 //             idx: state.idx + 5,
 //         });
 //     } else {
-//         setState({ ...state, idx: state.idx + 1, text: `${state.text}\n` });
+//         setState({ ...state, idx: state.idx + 1, value: `${state.value}\n` });
 //     }
 // });

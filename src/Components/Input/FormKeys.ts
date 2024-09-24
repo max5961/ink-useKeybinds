@@ -17,6 +17,8 @@ export const EVENTS = {
     return: "return",
     left: "left",
     right: "right",
+    up: "up",
+    down: "down",
     backspace: "backspace",
     tab: "tab",
     keypress: "keypress",
@@ -27,6 +29,8 @@ const getDefaultInsert = (): KeyBinds => {
         [EVENTS.return]: { key: "return" },
         [EVENTS.left]: { key: "left" },
         [EVENTS.right]: { key: "right" },
+        [EVENTS.up]: { key: "up" },
+        [EVENTS.down]: { key: "down" },
         [EVENTS.backspace]: { key: "backspace" },
         [EVENTS.tab]: { key: "tab" },
         [EVENTS.keypress]: {

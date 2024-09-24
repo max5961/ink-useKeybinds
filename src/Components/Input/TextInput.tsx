@@ -1,21 +1,133 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Text } from "ink";
-import { Return } from "./useTextInput.js";
+import { Return, useTextInput } from "./useTextInput.js";
 import { Props as TextProps } from "../../../node_modules/ink/build/components/Text.js";
 import chalk from "chalk";
+import { Binding } from "../../use-keybinds/useKeybinds.js";
 
-type Color = Exclude<TextProps["color"], undefined>;
+export namespace TextInputTypes {
+    export type Color = Exclude<TextProps["color"], undefined>;
 
-type Props = {
-    inputState: Return["inputState"];
-    mask?: boolean;
-    onSubmit?: (stdin: string) => unknown;
-    onEnter?: (stdin: string) => unknown;
-    onKeypress?: (stdin: string) => unknown;
-    placeholder?: string;
-    color?: Color;
-    cursorColor?: Color;
-};
+    export type Props = {
+        value: string;
+        onChange: (value: string) => unknown;
+        name?: string;
+        enterBinding?: Binding | Binding[];
+        exitBinding?: Binding | Binding[];
+        active?: boolean;
+        autoEnter?: boolean;
+        mask?: boolean;
+        onExit?: (stdin: string) => unknown;
+        onEnter?: (stdin: string) => unknown;
+        onKeypress?: (stdin: string) => unknown;
+        placeholder?: string;
+        color?: Color;
+        cursorColor?: Color;
+    };
+}
+
+export function TextInput(props: TextInputTypes.Props): React.ReactNode {
+    const {
+        value,
+        onChange,
+        mask,
+        placeholder,
+        color = "",
+        cursorColor = "",
+    } = props;
+
+    const { nextValue, idx, insert } = useTextInput(props);
+
+    useEffect(() => {
+        if (nextValue !== value) {
+            onChange(nextValue);
+        }
+    }, [nextValue, onChange]);
+
+    return (
+        <DisplayValue
+            nextValue={nextValue}
+            idx={idx}
+            insert={insert}
+            mask={mask}
+            placeholder={placeholder}
+            color={color}
+            cursorColor={cursorColor}
+        />
+    );
+}
+
+const DisplayValue = React.memo(function (
+    props: Omit<TextInputTypes.Props, "value" | "onChange"> & {
+        nextValue: string;
+        idx: number;
+        insert: boolean;
+    },
+): React.ReactNode {
+    let {
+        nextValue,
+        idx,
+        insert,
+        mask,
+        placeholder,
+        color = "",
+        cursorColor = "",
+    } = props;
+
+    color = normalizeColor(color);
+    cursorColor = normalizeColor(cursorColor);
+
+    let before: string, cursor: string, after: string;
+    before = cursor = after = "";
+
+    for (let i = 0; i < nextValue.length; ++i) {
+        const char = mask ? "*" : nextValue[i];
+
+        if (i < idx) {
+            before += char;
+        } else if (i === idx && nextValue[i] !== "\n") {
+            cursor += char;
+        } else {
+            after += char;
+        }
+    }
+
+    // Prevent collapsing height
+    if (!nextValue.length && !insert) {
+        return (
+            <Text color="grey" dimColor>
+                {placeholder || " "}
+            </Text>
+        );
+    }
+
+    if (!cursor) {
+        /* non breaking space*/
+        cursor = "\u2007";
+    }
+
+    before = chalk[color](before);
+
+    if (insert) {
+        cursor = chalk.inverse(chalk[cursorColor](cursor));
+    } else {
+        // cursor = chalk[color](" ");
+        cursor = "";
+    }
+
+    if (after.length) {
+        after = chalk[color](after);
+    }
+
+    const displayValue = `${before}${cursor}${after}`;
+
+    return <Text>{displayValue}</Text>;
+});
+
+function normalizeColor(color: string): string {
+    if (color === "" || !chalk[color]) return "white";
+    return color;
+}
 
 /*
  * TODO
@@ -36,75 +148,3 @@ type Props = {
  * for loop.  The same as done in the TextInput component and this implies that the
  * TextArea would have wrap on, but would detect when to insert a \n automatically
  * */
-
-export function TextInput({
-    inputState,
-    mask,
-    placeholder,
-    onSubmit,
-    onEnter,
-    onKeypress,
-    color = "",
-    cursorColor = "",
-}: Props): React.ReactNode {
-    let { text, idx, emitter } = inputState;
-
-    color = normalizeColor(color);
-    cursorColor = normalizeColor(cursorColor);
-
-    emitter.removeAllListeners();
-    onSubmit && emitter.on("submit", onSubmit);
-    onEnter && emitter.on("enter", onEnter);
-    onKeypress && emitter.on("keypress", onKeypress);
-
-    let before: string, cursor: string, after: string;
-    before = cursor = after = "";
-
-    for (let i = 0; i < text.length; ++i) {
-        const char = mask ? "*" : text[i];
-
-        if (i < idx) {
-            before += char;
-        } else if (i === idx && text[i] !== "\n") {
-            cursor += char;
-        } else {
-            after += char;
-        }
-    }
-
-    // Prevent collapsing height
-    if (!text.length && !inputState.insert) {
-        return (
-            <Text color="grey" dimColor>
-                {placeholder || " "}
-            </Text>
-        );
-    }
-
-    if (!cursor) {
-        /* non breaking space*/
-        cursor = "\u2007";
-    }
-
-    before = chalk[color](before);
-
-    if (inputState.insert) {
-        cursor = chalk.inverse(chalk[cursorColor](cursor));
-    } else {
-        // cursor = chalk[color](" ");
-        cursor = "";
-    }
-
-    if (after.length) {
-        after = chalk[color](after);
-    }
-
-    const val = `${before}${cursor}${after}`;
-
-    return <Text>{val}</Text>;
-}
-
-function normalizeColor(color: string): string {
-    if (color === "" || !chalk[color]) return "white";
-    return color;
-}
