@@ -7,14 +7,21 @@ import { Props as TextProps } from "../../../node_modules/ink/build/components/T
 
 export function Submit(
     props: TextProps &
-        PropsWithChildren & { submitBinding?: Binding | Binding[] },
+        PropsWithChildren & { submitBinding?: Binding | Binding[] } & {
+            formFocus?: boolean;
+        },
 ): React.ReactNode {
     const formContext = useFormContext();
 
     // prettier-ignore
     if (!formContext) throw new Error("Submit component must be used within Form component")
 
-    useKeybinds({ SUBMIT_FORM: props.submitBinding || { key: "return" } });
+    const priority = props.formFocus ? "default" : "never";
+
+    useKeybinds(
+        { SUBMIT_FORM: props.submitBinding || { key: "return" } },
+        { priority },
+    );
 
     useEvent("SUBMIT_FORM", () => {
         formContext.FORM_EMITTER.emit("SUBMIT");

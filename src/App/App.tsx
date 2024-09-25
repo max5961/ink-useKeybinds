@@ -8,6 +8,7 @@ import { useIsFocus } from "../Components/Sequence/SequenceUnit/useIsFocus.js";
 import { Submit } from "../Components/Form/Submit.js";
 import { useKeybinds } from "../use-keybinds/useKeybinds.js";
 import { useEvent } from "../use-keybinds/useEvent.js";
+import { useForm } from "../Components/Form/useForm.js";
 
 Register.setRegisterSize(2);
 
@@ -16,28 +17,74 @@ export default function App(): React.ReactNode {
     useKeybinds({ quit: { input: "q" } });
     useEvent("quit", () => exit());
 
-    /*
-     * Create wrapper for TextInput that automatically calls useTextInput and
-     * passes it to TextInput.  It also creates a Context that allows to pass in
-     * the emitter from useTextInput directly as a prop and then get the Context
-     * from the wrapper for TextInput to pass in the FORM_EMITTER object.  On
-     * every render for TextInput, if there is context, then FORM_EMITTER will
-     * emit an event that sends data UP to the useForm hook to update it's ref and
-     * subsequently perform any checks on the new data and updating state accordingly
-     * such as updating the errors object state that should be returned from the
-     * hook
-     * */
+    const { register, registerSubmit, handleSubmit, focus, errors } = useForm();
+    const color = (name: string) => {
+        if (focus[name]) return "blue";
+        if (errors[name]) return "red";
+        return "";
+    };
+
+    const errMsg = (name: string) => {
+        const textBox = errors[name] && <Text color="red">{errors[name]}</Text>;
+        return textBox || null;
+    };
 
     return (
         <Box width={25} borderStyle="round">
-            <Form
-                onSubmit={(data) => {
-                    console.log(data);
-                }}
-            >
-                <MyInput name="username" />
-                <MyInput name="password" />
-                <SubmitButton />
+            <Form onSubmit={handleSubmit((data) => console.log(data))}>
+                <Box
+                    width="100"
+                    borderStyle="round"
+                    borderColor={color("username")}
+                    flexDirection="column"
+                >
+                    <TextInput
+                        {...register("username", {
+                            required: {
+                                value: true,
+                                message: "Missing username!",
+                            },
+                        })}
+                        placeholder="Enter yo username"
+                        enterBinding={{ input: "i" }}
+                        exitBinding={{ key: "return" }}
+                    />
+                </Box>
+                {errMsg("username")}
+                <Box
+                    width="100"
+                    borderStyle="round"
+                    borderColor={color("password")}
+                    flexDirection="column"
+                >
+                    <TextInput
+                        {...register("password", {
+                            required: {
+                                value: true,
+                                message: "Missing pw!",
+                            },
+                        })}
+                        placeholder="Enter yo password"
+                        enterBinding={{ input: "i" }}
+                        exitBinding={{ key: "return" }}
+                        mask
+                    />
+                </Box>
+                {errMsg("password")}
+
+                <Box
+                    width="100"
+                    borderStyle="round"
+                    borderColor={color("submit")}
+                    flexDirection="column"
+                >
+                    <Submit
+                        color={color("submit")}
+                        {...registerSubmit("submit")}
+                    >
+                        Submit
+                    </Submit>
+                </Box>
             </Form>
         </Box>
     );
@@ -70,8 +117,9 @@ function MyInput({ name }: { name: string }): React.ReactNode {
 }
 
 function SubmitButton(): React.ReactNode {
-    const isFocus = useIsFocus();
-    const borderColor = isFocus ? "blue" : "";
+    // const isFocus = useIsFocus();
+    // const borderColor = isFocus ? "blue" : "";
+    const borderColor = "";
 
     return (
         <Box borderStyle="round" borderColor={borderColor} width="100">

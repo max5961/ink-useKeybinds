@@ -32,7 +32,13 @@ export function useTextInput(args: Args): Return {
     const ACTIVE = args?.active === undefined ? true : args?.active;
     const [ID] = useState(randomUUID());
 
-    const isFocus = useIsFocus();
+    const isFocus =
+        useIsFocus() && (args.formFocus === undefined || args.formFocus);
+    // console.log(`name: ${args.name}, isFocus: ${isFocus}`);
+
+    // value also needs to be defined here as well to account for onChange changing value
+    // rather than relying on the local state.value variable
+
     const [state, setState] = useState<State>({
         value: args.value,
         idx: args.value.length,
@@ -74,7 +80,9 @@ export function useTextInput(args: Args): Return {
 
     const keybinds: KeyBinds = state.insert ? insertKb : normalKb;
     // prettier-ignore
-    const priority: Priority = state.insert ? "textinput" : ACTIVE ? "default" : "never";
+    // const priority: Priority = state.insert ? "textinput" : ACTIVE ? "default" : "never";
+    // prettier-ignore
+    const priority: Priority = state.insert && isFocus ? "textinput" : isFocus ? "default" : "never";
 
     useKeybinds(keybinds, { priority });
 
@@ -108,31 +116,31 @@ export function useTextInput(args: Args): Return {
     useEvent(EVENTS.tab, () => {
         if (!state.insert) return;
 
-        if (formContext) {
-            setState({ ...state, insert: false });
-            formContext.nextItem();
-        } else {
-            const nextValue = `${state.value}    `;
-            updateFormValues(nextValue);
-            setState({ ...state, idx: state.idx + 4, value: nextValue });
-        }
+        const nextValue = `${state.value}    `;
+        updateFormValues(nextValue);
+        setState({ ...state, idx: state.idx + 4, value: nextValue });
     });
 
     useEvent(EVENTS.down, () => {
         if (!state.insert || !formContext) return;
         setState({ ...state, insert: false });
-        formContext.nextItem();
+        // formContext.nextItem();
     });
 
     useEvent(EVENTS.up, () => {
         if (!state.insert || !formContext) return;
         setState({ ...state, insert: false });
-        formContext.prevItem();
+        // formContext.prevItem();
     });
 
+    // CAN UPDATE VALUE
     useEvent(EVENTS.backspace, () => {
         if (!state.insert) return;
-        const { value, idx } = state;
+        let { value, idx } = state;
+
+        // if (useFormRef && props.name) {
+        //     value = ref[name].current];
+        // }
 
         const nextIdx = idx > 0 ? idx - 1 : 0;
         const nextValue =
@@ -142,6 +150,7 @@ export function useTextInput(args: Args): Return {
         setState({ ...state, value: nextValue, idx: nextIdx });
     });
 
+    // CAN UPDATE VALUE
     useEvent(EVENTS.keypress, (stdin: string) => {
         if (state.insert) {
             args.onKeypress && args.onKeypress(stdin);
