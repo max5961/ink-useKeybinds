@@ -29,9 +29,20 @@ export default function App(): React.ReactNode {
         return textBox || null;
     };
 
+    function onSubmit(data) {
+        console.log("Form submitted!");
+        console.log(data);
+    }
+
+    function onError(errors) {
+        console.log("You have submitted the form with errors!");
+        console.log("Here are the errors you need to fix");
+        console.log(errors);
+    }
+
     return (
         <Box width={25} borderStyle="round">
-            <Form onSubmit={handleSubmit((data) => console.log(data))}>
+            <Form onSubmit={handleSubmit(onSubmit, onError)}>
                 <Box
                     width="100"
                     borderStyle="round"

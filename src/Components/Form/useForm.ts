@@ -33,7 +33,10 @@ export type UseFormReturn = {
         formFocus: boolean;
     };
     registerSubmit: (name: string) => { formFocus: boolean };
-    handleSubmit: (onSubmit: (data: FormValues) => unknown) => () => void;
+    handleSubmit: (
+        onSubmit: (data: FormValues) => unknown,
+        onError?: (errors: Errors) => void,
+    ) => () => void;
     focus: FocusState;
     errors: Errors;
 };
@@ -84,7 +87,10 @@ export function useForm(): UseFormReturn {
         return { formFocus: focusRef.current[name] };
     }
 
-    function handleSubmit(onSubmit: (data: FormValues) => void): () => void {
+    function handleSubmit(
+        onSubmit: (data: FormValues) => void,
+        onError?: (errors: Errors) => void,
+    ): () => void {
         return () => {
             ++submitCount.current;
 
@@ -94,12 +100,14 @@ export function useForm(): UseFormReturn {
                 }),
             );
 
+            let hasErrors = false;
             const nextErrors: Errors = {};
             Object.keys(formStateRef.current).forEach((k) => {
                 const field = formStateRef.current[k];
                 nextErrors[k] = null;
                 if (field.opts.required && field.value === "") {
                     nextErrors[k] = field.opts.required.message;
+                    hasErrors = true;
                 }
             });
 
@@ -107,7 +115,11 @@ export function useForm(): UseFormReturn {
                 setErrors(nextErrors);
             }
 
-            onSubmit(formValues);
+            if (hasErrors && onError) {
+                onError(nextErrors);
+            } else {
+                onSubmit(formValues);
+            }
         };
     }
 

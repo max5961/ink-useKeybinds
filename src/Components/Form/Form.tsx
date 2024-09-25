@@ -22,32 +22,6 @@ export function useFormContext(): FormContext | null {
 }
 
 export function Form({ children, onSubmit }: Props): React.ReactNode {
-    React.Children.map(children, (child: React.ReactNode) => {
-        if (React.isValidElement(child)) {
-            if (child.type === TextInput) {
-                // return WrappedTextInput
-                return null;
-            } else {
-                return child;
-            }
-        } else {
-            return null;
-        }
-    });
-
-    function DFS(children: React.ReactNode, targetType: Function): void {
-        React.Children.forEach(children, (child) => {
-            if (React.isValidElement(child) && child.type === targetType) {
-                //
-            } else if (
-                React.isValidElement(child) &&
-                (child as any).props.children
-            ) {
-                DFS((child as any).props.children, targetType);
-            }
-        });
-    }
-
     const [FORM_EMITTER] = useState(new EventEmitter());
     const formValues = useRef<FormValues>({});
 
