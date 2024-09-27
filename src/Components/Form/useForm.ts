@@ -60,7 +60,10 @@ export function useForm(): UseFormReturn {
         );
     }
 
-    useKeybinds({ focusNext: { key: "tab" } });
+    useKeybinds({
+        focusNext: [{ key: "tab" }, { input: "j" }, { key: "down" }],
+        focusPrev: [{ input: "k" }, { key: "up" }],
+    });
     useEvent("focusNext", () => {
         if (focusIdx >= focusCycleRef.current.length - 1) {
             updateFocusRef(0); // why does the order matter here???
@@ -68,6 +71,15 @@ export function useForm(): UseFormReturn {
         } else {
             updateFocusRef(focusIdx + 1);
             setFocusIdx(focusIdx + 1);
+        }
+    });
+    useEvent("focusPrev", () => {
+        if (focusIdx === 0) {
+            updateFocusRef(focusCycleRef.current.length - 1); // why does the order matter here???
+            setFocusIdx(focusCycleRef.current.length - 1);
+        } else {
+            updateFocusRef(focusIdx - 1);
+            setFocusIdx(focusIdx - 1);
         }
     });
 
