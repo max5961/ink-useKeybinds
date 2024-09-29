@@ -25,7 +25,7 @@ const navigatorOne = [
 const navigatorTwo = [
     ["A", "B"],
     ["C", "D"],
-    ["E"], 
+    ["E"],
     ["F", "G"],
     ["H"],
     ["I"],
@@ -43,7 +43,8 @@ export default function App(): React.ReactNode {
 
     const [navOne, setNavOne] = useState(true);
 
-    const { node } = useNavigator<Nav>(navOne ? navigatorOne : navigatorTwo, {
+    // prettier-ignore
+    const { node, focus } = useNavigator<Nav>(navOne ? navigatorOne : navigatorTwo, {
         keybinds: "vi",
     });
 
@@ -53,7 +54,7 @@ export default function App(): React.ReactNode {
         setNavOne(!navOne);
     });
 
-    const color = (checkNode: Nav) => (checkNode === node ? "blue" : "");
+    const color = (node: Nav) => (focus[node] ? "blue" : "");
 
     if (navOne) {
         return (
@@ -194,21 +195,22 @@ export default function App(): React.ReactNode {
     }
 }
 
-//     export default function App(): React.ReactNode {
-//         const { exit } = useApp();
-//         useKeybinds({ quit: { input: "q" } });
-//         useEvent("quit", () => exit());
+// export default function App(): React.ReactNode {
+//     const { exit } = useApp();
+//     useKeybinds({ quit: { input: "q" } });
+//     useEvent("quit", () => exit());
 //
-//         const { register, registerSubmit, handleSubmit, focus, errors } = useForm();
-//         const color = (name: string) => {
-//             if (focus[name]) return "blue";
-//             // if (errors[name]) return "red";
-//             return "";
-//         };
+//     const { register, registerSubmit, handleSubmit, focus, errors } = useForm();
+//     const color = (name: string) => {
+//         if (focus[name]) return "blue";
+//         // if (errors[name]) return "red";
+//         return "";
+//     };
 //
-//         const errMsg = (name: string) => {
-//             // This should be errors[name]?.message
-//             return <Text color="red">{errors[name]}</Text>;
+//     const errMsg = (name: string) => {
+//         // This should be errors[name]?.message
+//         return <Text color="red">{errors[name]}</Text>;
+//     };
 //
 //     function onSubmit(data) {
 //         console.log("Form submitted!");

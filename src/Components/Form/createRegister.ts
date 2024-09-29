@@ -16,14 +16,14 @@ export type RegisterOpts = {
 
 export function createRegister({
     formState,
-    focusCycle,
+    focusArray,
     focus,
     submitCount,
     errors,
     setErrors,
 }: {
     formState: FormState;
-    focusCycle: FocusCycle;
+    focusArray: FocusCycle;
     focus: FocusState;
     submitCount: number;
     errors: Errors;
@@ -58,8 +58,8 @@ export function createRegister({
             }
         }
 
-        if (!focusCycle.includes(name)) {
-            focusCycle.push(name);
+        if (!focusArray.includes(name)) {
+            focusArray.push(name);
         }
 
         return {

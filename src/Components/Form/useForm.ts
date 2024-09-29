@@ -44,17 +44,18 @@ export type UseFormReturn = {
 export function useForm(): UseFormReturn {
     const submitCount = useRef(0);
 
-    const formStateRef = useRef<FormState>({});
-    const focusCycleRef = useRef<string[]>([]);
-    const focusRef = useRef<FocusState>({});
+    const formState = useRef<FormState>({});
+    const focusArray = useRef<string[]>([]);
+    const focus = useRef<FocusState>({});
 
     const [focusIdx, setFocusIdx] = useState(0);
     const [errors, setErrors] = useState<Errors>({});
-    const [_, forceRender] = useState(0);
+    const [_, render] = useState(0);
+    const forceRender = () => render((prev) => prev + 1);
 
     function updateFocusRef(nextIdx: number) {
-        focusRef.current = Object.fromEntries(
-            focusCycleRef.current.map((name, idx) => {
+        focus.current = Object.fromEntries(
+            focusArray.current.map((name, idx) => {
                 return [name, nextIdx === idx];
             }),
         );
@@ -65,7 +66,7 @@ export function useForm(): UseFormReturn {
         focusPrev: [{ input: "k" }, { key: "up" }],
     });
     useEvent("focusNext", () => {
-        if (focusIdx >= focusCycleRef.current.length - 1) {
+        if (focusIdx >= focusArray.current.length - 1) {
             updateFocusRef(0); // why does the order matter here???
             setFocusIdx(0);
         } else {
@@ -75,8 +76,8 @@ export function useForm(): UseFormReturn {
     });
     useEvent("focusPrev", () => {
         if (focusIdx === 0) {
-            updateFocusRef(focusCycleRef.current.length - 1); // why does the order matter here???
-            setFocusIdx(focusCycleRef.current.length - 1);
+            updateFocusRef(focusArray.current.length - 1); // why does the order matter here???
+            setFocusIdx(focusArray.current.length - 1);
         } else {
             updateFocusRef(focusIdx - 1);
             setFocusIdx(focusIdx - 1);
@@ -84,19 +85,19 @@ export function useForm(): UseFormReturn {
     });
 
     const register = createRegister({
-        focus: focusRef.current,
-        formState: formStateRef.current,
-        focusCycle: focusCycleRef.current,
+        focus: focus.current,
+        formState: formState.current,
+        focusArray: focusArray.current,
         submitCount: submitCount.current,
         errors,
         setErrors,
     });
 
     function registerSubmit(name: string) {
-        if (!focusCycleRef.current.includes(name)) {
-            focusCycleRef.current.push(name);
+        if (!focusArray.current.includes(name)) {
+            focusArray.current.push(name);
         }
-        return { formFocus: focusRef.current[name] };
+        return { formFocus: focus.current[name] };
     }
 
     function handleSubmit(
@@ -107,15 +108,15 @@ export function useForm(): UseFormReturn {
             ++submitCount.current;
 
             const formValues = Object.fromEntries(
-                Object.keys(formStateRef.current).map((name) => {
-                    return [name, formStateRef.current[name].value];
+                Object.keys(formState.current).map((name) => {
+                    return [name, formState.current[name].value];
                 }),
             );
 
             let hasErrors = false;
             const nextErrors: Errors = {};
-            Object.keys(formStateRef.current).forEach((k) => {
-                const field = formStateRef.current[k];
+            Object.keys(formState.current).forEach((k) => {
+                const field = formState.current[k];
                 nextErrors[k] = null;
                 if (field.opts.required && field.value === "") {
                     nextErrors[k] = field.opts.required.message;
@@ -137,7 +138,7 @@ export function useForm(): UseFormReturn {
 
     useEffect(() => {
         updateFocusRef(focusIdx);
-        forceRender((prev) => prev + 1);
+        forceRender();
     }, []);
 
     return {
@@ -145,6 +146,6 @@ export function useForm(): UseFormReturn {
         registerSubmit,
         handleSubmit,
         errors,
-        focus: focusRef.current,
+        focus: focus.current,
     };
 }

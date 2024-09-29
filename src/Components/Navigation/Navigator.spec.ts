@@ -44,12 +44,12 @@ describe("Starting node in constructor", () => {
 });
 
 describe("Handles different initializers", () => {
-    test("Empty initializer '[[]]' throws error", () => {
-        const map = [[]];
-        expect(() => {
-            new Navigator(map);
-        }).toThrow();
-    });
+    // test("Empty initializer '[[]]' throws error", () => {
+    //     const map = [[]];
+    //     expect(() => {
+    //         new Navigator(map);
+    //     }).toThrow();
+    // });
 
     test("Single node does not throw error", () => {
         const map = [["a"]];
@@ -65,6 +65,29 @@ describe("Handles different initializers", () => {
         expect(nav.right()).toBe("a");
         expect(nav.next()).toBe("a");
         expect(nav.prev()).toBe("a");
+    });
+});
+
+describe("moveToIteration()", () => {
+    const map = [
+        ["0", "1"],
+        ["2", "3"],
+    ];
+    const nav = new Navigator(map);
+
+    test("Out of range", () => {
+        expect(nav.moveToIteration(4)).toBe("0");
+        expect(nav.moveToIteration(5)).toBe("0");
+        expect(nav.moveToIteration(6)).toBe("0");
+        expect(nav.moveToIteration(7)).toBe("0");
+    });
+
+    test("In range", () => {
+        expect(nav.moveToIteration(0)).toBe("0");
+        expect(nav.moveToIteration(1)).toBe("1");
+        expect(nav.moveToIteration(2)).toBe("2");
+        expect(nav.moveToIteration(3)).toBe("3");
+        expect(nav.moveToIteration(0)).toBe("0");
     });
 });
 

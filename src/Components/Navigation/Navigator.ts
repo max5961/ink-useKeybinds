@@ -1,26 +1,26 @@
+import assert from "assert";
+
 export type Initializer = string[][];
 export type Coords = [number, number];
 
 export class Navigator {
     private nav: Initializer;
-    private curr!: Coords;
-    private prevMap: { [key: string]: Coords };
-    private nextMap: { [key: string]: Coords };
-    private iterationMap: { [key: string]: number };
+    private currCoords!: Coords;
+    private nameMap: { [name: string]: { coords: Coords; iteration: number } };
+    private prevMap: { [name: string]: Coords };
+    private nextMap: { [name: string]: Coords };
     private size: number;
-    private iteration: number;
 
-    constructor(nav: Initializer, startingNode?: string) {
+    constructor(nav: Initializer, startingNode?: string | number) {
         this.nav = nav;
         this.prevMap = {};
         this.nextMap = {};
-        this.iterationMap = {};
+        this.nameMap = {};
         this.size = 0;
-        this.iteration = 0;
         this.init(nav, startingNode);
     }
 
-    private init = (nav: Initializer, startingNode?: string): void => {
+    private init = (nav: Initializer, startingNode?: string | number): void => {
         let currStartCoords: Coords | null = null;
 
         let prevCoords: Coords | null = null;
@@ -37,13 +37,15 @@ export class Navigator {
 
                 if (!name) continue;
 
-                this.iterationMap[name] = size;
-                ++size;
+                this.nameMap[name] = { coords: currCoords, iteration: size };
 
-                if (
-                    (startingNode && startingNode === name) ||
-                    !currStartCoords
-                ) {
+                if (!currStartCoords) {
+                    currStartCoords = currCoords;
+                }
+                if (typeof startingNode === "string" && startingNode === name) {
+                    currStartCoords = currCoords;
+                }
+                if (typeof startingNode === "number" && startingNode === size) {
                     currStartCoords = currCoords;
                 }
 
@@ -62,40 +64,68 @@ export class Navigator {
                 }
 
                 prevCoords = currCoords;
+                ++size;
             }
         }
 
         // prettier-ignore
         if (!startName || !prevCoords || !startCoords || !prevName || !currStartCoords) {
-            throw new Error("Invalid navigation initializer");
+            // throw new Error("Invalid navigation initializer");
+            this.size = size;
+            this.currCoords = [-1, -1];
+            return;
         }
 
         this.size = size;
         this.prevMap[startName] = prevCoords;
         this.nextMap[prevName] = startCoords;
-        this.curr = currStartCoords;
+        this.currCoords = currStartCoords;
     };
 
     public getLocation = (): string => {
-        const [y, x] = this.curr;
-        return this.nav[y][x];
+        try {
+            const [y, x] = this.currCoords;
+            return this.nav[y][x];
+        } catch {
+            return "";
+        }
     };
 
     public getIteration = (): number => {
-        return this.iteration;
+        const name = this.getLocation();
+
+        return this.nameMap[name].iteration;
     };
 
     public getSize = (): number => {
         return this.size;
     };
 
+    public moveToIteration = (n: number): string => {
+        if (n >= this.getSize() || n < 0) {
+            return this.getLocation();
+        }
+
+        let nextCoords: Coords | undefined = undefined;
+        for (const name in this.nameMap) {
+            if (this.nameMap[name].iteration === n) {
+                nextCoords = this.nameMap[name].coords;
+                break;
+            }
+        }
+
+        assert(nextCoords);
+        this.currCoords = nextCoords;
+
+        return this.getLocation();
+    };
+
     private autoMove = (dir: -1 | 1): string => {
         const name = this.getLocation();
         const nextCoords = dir < 0 ? this.prevMap[name] : this.nextMap[name];
 
-        this.curr = nextCoords;
+        this.currCoords = nextCoords;
         const nextName = this.getLocation();
-        this.iteration = this.iterationMap[nextName];
 
         return nextName;
     };
@@ -109,12 +139,12 @@ export class Navigator {
     };
 
     private move = (dy: number, dx: number): string => {
-        const [y, x] = this.curr;
+        const [y, x] = this.currCoords;
         const ny = y + dy;
         let nx = x + dx;
 
         if (this.nav[ny]?.[nx]) {
-            this.curr = [ny, nx];
+            this.currCoords = [ny, nx];
         }
 
         if (this.nav[ny]?.[nx] === undefined) {
@@ -127,12 +157,11 @@ export class Navigator {
             }
 
             if (this.nav[ny]?.[nx]) {
-                this.curr = [ny, nx];
+                this.currCoords = [ny, nx];
             }
         }
 
         const name = this.getLocation();
-        this.iteration = this.iterationMap[name];
 
         return name;
     };

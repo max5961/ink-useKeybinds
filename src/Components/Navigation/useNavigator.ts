@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigator, Initializer } from "./Navigator.js";
 import { shallowEqualArrays } from "shallow-equal";
 import { useKeybinds } from "../../use-keybinds/useKeybinds.js";
@@ -16,10 +16,15 @@ type Opts<T extends string = string> = {
 
 type Return<T extends string = string> = {
     node: T;
+    focus: FocusMap<T>;
     util: Omit<
         { [P in keyof Navigator]: Navigator[P] },
         "getIteration" | "getSize"
     >;
+};
+
+type FocusMap<T extends string = string> = {
+    [P in T]: boolean;
 };
 
 export function useNavigator<T extends string = string>(
@@ -29,38 +34,53 @@ export function useNavigator<T extends string = string>(
     const navigator = useRef<Navigator>(
         new Navigator(initializer, opts.initialFocus),
     );
-    const initializerRef = useRef<Initializer>(initializer);
-
     const [node, setNode] = useState<string>(navigator.current.getLocation());
+
+    const initializerRef = useRef<Initializer>(initializer);
+    const possibleNodes: string[] = getPossibleNodes();
+
+    function getPossibleNodes(): string[] {
+        return initializer
+            .flatMap((i) => {
+                return i.map((j) => (j ? j : null));
+            })
+            .filter((i) => i !== null);
+    }
+
+    function getFocusMap(): FocusMap {
+        return Object.fromEntries(
+            possibleNodes.map((currNode: string) => {
+                if (currNode === node) {
+                    return [currNode, true];
+                }
+                return [currNode, false];
+            }),
+        );
+    }
 
     useEffect(() => {
         if (!shallowEqualArrays(initializer, initializerRef.current)) {
-            const compare = () => {
-                return {
-                    focus: navigator.current.getLocation(),
-                    size: navigator.current.getSize(),
-                    iter: navigator.current.getIteration(),
-                };
-            };
+            const initialIter = navigator.current.getIteration();
 
-            const initial = compare();
-
-            navigator.current = new Navigator(initializer, initial.focus);
+            // Navigator accepts an initial focus, but if the initial focus does
+            // not exist in the initializer, focus defaults to the first node
+            navigator.current = new Navigator(initializer, initialIter);
             initializerRef.current = initializer;
 
-            let next = compare();
+            const nextIter = navigator.current.getIteration();
+            const nextSize = navigator.current.getSize();
 
-            if (initial.focus === next.focus) return;
-
-            let i = 0;
-            let max = next.size;
-            while (next.iter !== next.size - 1 && i <= max) {
-                ++i;
-                navigator.current.next();
-                next = compare();
+            if (initialIter === nextIter) {
+                // still need to update node, in case iteration stays the same, but name changes
+                setNode(navigator.current.getLocation());
+                return;
             }
 
-            setNode(navigator.current.getLocation());
+            // Initializer size has decreased AND shifted initialIter out of range,
+            // so shift focus to the last node in the new Navigator
+            if (nextSize <= initialIter) {
+                setNode(navigator.current.moveToIteration(nextSize - 1));
+            }
         }
     }, [initializer]);
 
@@ -102,8 +122,10 @@ export function useNavigator<T extends string = string>(
 
     return {
         node: node as T,
+        focus: getFocusMap(),
         util: {
             getLocation: navigator.current.getLocation,
+            moveToIteration: navigator.current.moveToIteration,
             up: navigator.current.up,
             down: navigator.current.down,
             left: navigator.current.left,
