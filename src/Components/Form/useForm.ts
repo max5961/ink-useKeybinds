@@ -75,14 +75,9 @@ export function useForm(opts: Opts = {}): UseFormReturn {
         setFocusMap(focusMapRef.current);
     }, []);
 
-    const { node, focus, internalUtil } = useNavigator(
-        opts?.navigator || focusMap,
-        {
-            keybinds: opts?.keybinds || "arrow",
-        },
-    );
-
-    console.log(node);
+    const { focus, internalUtil } = useNavigator(opts?.navigator || focusMap, {
+        keybinds: opts?.keybinds || "arrow",
+    });
 
     const register = useCreateRegister({
         focus: focus,

@@ -7,7 +7,6 @@ import React, {
 } from "react";
 import EventEmitter from "events";
 import { Box } from "ink";
-import { NavigatorPublicMethods } from "../Navigation/Navigator.js";
 
 type Props<T = any> = PropsWithChildren & { onSubmit?: (data: T) => unknown };
 type FormValues = { [name: string]: string };

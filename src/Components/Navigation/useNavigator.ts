@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Navigator, Initializer, NavigatorPublicMethods } from "./Navigator.js";
-import { shallowEqualArrays } from "shallow-equal";
 import { useKeybinds } from "../../use-keybinds/useKeybinds.js";
 import { useEvent } from "../../use-keybinds/useEvent.js";
 import {
@@ -8,7 +7,7 @@ import {
     viKeybinds,
     arrowKeybinds,
 } from "./navigatorConstants.js";
-import { equalInitializers } from "./util.js";
+import { deepEqual } from "./util.js";
 
 type Opts<T extends string = string> = {
     initialFocus?: T;
@@ -59,7 +58,7 @@ export function useNavigator<T extends string = string>(
         );
     }
 
-    if (!equalInitializers(initializer, initializerRef.current)) {
+    if (!deepEqual(initializer, initializerRef.current)) {
         const initialIter = navigator.current.getIteration();
 
         // Navigator accepts an initial focus, but if the initial focus does
@@ -131,12 +130,7 @@ export function useNavigator<T extends string = string>(
     const internalUtil: NavigatorPublicMethods = { ...util };
     for (const key in internalUtil) {
         internalUtil[key] = () => {
-            const currNode = util.getLocation();
-            const nextNode = util[key]();
-            console.log(
-                `nodeState: ${node}, (curr): ${currNode} --> (next): ${nextNode}`,
-            );
-            setNode(nextNode);
+            setNode(util[key]());
             return "";
         };
     }

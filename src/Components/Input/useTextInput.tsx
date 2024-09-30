@@ -151,8 +151,8 @@ export function useTextInput(args: Args): Return {
         EVENTS.down,
         () => {
             if (!state.insert || !formContext) return;
+            args.insertControl?.down && args.insertControl.down();
             setState({ ...state, insert: false });
-            // formContext.nextItem();
         },
         formFocus,
     );
@@ -161,8 +161,8 @@ export function useTextInput(args: Args): Return {
         EVENTS.up,
         () => {
             if (!state.insert || !formContext) return;
+            args.insertControl?.up && args.insertControl.up();
             setState({ ...state, insert: false });
-            // formContext.prevItem();
         },
         formFocus,
     );
