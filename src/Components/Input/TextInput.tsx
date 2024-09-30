@@ -4,7 +4,7 @@ import { Return, useTextInput } from "./useTextInput.js";
 import { Props as TextProps } from "../../../node_modules/ink/build/components/Text.js";
 import chalk from "chalk";
 import { Binding } from "../../use-keybinds/useKeybinds.js";
-import { FocusState } from "../Form/useForm.js";
+import { FocusState, useForm, UseFormReturn } from "../Form/useForm.js";
 
 export namespace TextInputTypes {
     export type Color = Exclude<TextProps["color"], undefined>;
@@ -16,6 +16,7 @@ export namespace TextInputTypes {
         formFocus?: boolean;
         enterBinding?: Binding | Binding[];
         exitBinding?: Binding | Binding[];
+        insertControl?: ReturnType<UseFormReturn["register"]>["insertControl"];
         active?: boolean;
         autoEnter?: boolean;
         mask?: boolean;

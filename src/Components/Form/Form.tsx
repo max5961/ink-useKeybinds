@@ -6,8 +6,8 @@ import React, {
     useState,
 } from "react";
 import EventEmitter from "events";
-import { TextInput } from "../Input/TextInput.js";
 import { Box } from "ink";
+import { NavigatorPublicMethods } from "../Navigation/Navigator.js";
 
 type Props<T = any> = PropsWithChildren & { onSubmit?: (data: T) => unknown };
 type FormValues = { [name: string]: string };
@@ -16,6 +16,7 @@ type FormContext = {
     FORM_EMITTER: EventEmitter;
 };
 const FormContext = createContext<FormContext | null>(null);
+
 export function useFormContext(): FormContext | null {
     const context = useContext(FormContext);
     return context;

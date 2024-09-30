@@ -1,7 +1,7 @@
 import { shallowEqualObjects } from "shallow-equal";
 import { FocusState, FormState, UseFormReturn, Errors } from "./useForm.js";
-
 import { mapIncludes } from "./util.js";
+import { NavigatorPublicMethods } from "../Navigation/Navigator.js";
 
 export type RegisterOpts = {
     required?: {
@@ -10,13 +10,14 @@ export type RegisterOpts = {
     };
 };
 
-export function createRegister({
+export function useCreateRegister({
     formState,
     focusMapRef,
     focus,
     submitCount,
     errors,
     setErrors,
+    internalUtil,
 }: {
     formState: FormState;
     focusMapRef: string[][];
@@ -24,6 +25,7 @@ export function createRegister({
     submitCount: number;
     errors: Errors;
     setErrors: (errors: Errors) => void;
+    internalUtil: NavigatorPublicMethods;
 }) {
     return (
         name: string,
@@ -61,6 +63,11 @@ export function createRegister({
             value: formState[name].value,
             onChange: onChange,
             formFocus: focus[name],
+            insertControl: {
+                tab: internalUtil.next,
+                up: internalUtil.prev,
+                down: internalUtil.next,
+            },
         };
     };
 }

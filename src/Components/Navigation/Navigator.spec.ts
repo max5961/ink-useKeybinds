@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Navigator, Initializer } from "./Navigator.js";
+import { equalInitializers } from "./util.js";
 
 // prettier-ignore
 const map: Initializer = [
@@ -214,5 +215,43 @@ describe("next, prev functions", () => {
     });
     test("PREV: 3 => 2", () => {
         expect(nav.prev()).toBe("2");
+    });
+});
+
+describe("util: equalInitializers", () => {
+    describe("equal", () => {
+        test("1", () => {
+            const map1 = [["1", "2"], ["3"]];
+            const map2 = [["1", "2"], ["3"]];
+            expect(equalInitializers(map1, map2)).toBe(true);
+        });
+        test("2", () => {
+            const map1 = [["1", "2"], ["3", "4", "5"], [], ["6"]];
+            const map2 = [["1", "2"], ["3", "4", "5"], [], ["6"]];
+            expect(equalInitializers(map1, map2)).toBe(true);
+        });
+    });
+
+    describe("not equal", () => {
+        test("height desc", () => {
+            const map1 = [["1", "2"], ["3"], ["4"]];
+            const map2 = [["1", "2"], ["3"]];
+            expect(equalInitializers(map1, map2)).toBe(false);
+        });
+        test("height asc", () => {
+            const map1 = [["1", "2"], ["3"]];
+            const map2 = [["1", "2"], ["3", "4", "5"], [], ["6"]];
+            expect(equalInitializers(map1, map2)).toBe(false);
+        });
+        test("width asc", () => {
+            const map1 = [["1"], ["3"]];
+            const map2 = [["1", "2"], ["3"]];
+            expect(equalInitializers(map1, map2)).toBe(false);
+        });
+        test("width desc", () => {
+            const map1 = [["1", "2"], ["3"]];
+            const map2 = [["1"], ["3"]];
+            expect(equalInitializers(map1, map2)).toBe(false);
+        });
     });
 });

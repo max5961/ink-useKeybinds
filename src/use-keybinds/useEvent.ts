@@ -7,6 +7,7 @@ import { useItemFocus } from "../Components/Sequence/SequenceUnit/ItemContext.js
 export function useEvent<T extends KeyBinds = any>(
     cmd: KeyOf<T>,
     handler: (stdin: string) => unknown,
+    extraFocusCheck?: boolean,
 ): void {
     const oldListeners = useRef<Listener[]>([]);
     Register.removeOldListeners(oldListeners.current);
@@ -14,7 +15,9 @@ export function useEvent<T extends KeyBinds = any>(
     const isPageFocus = usePageFocus();
     const isItemFocus = useItemFocus();
 
-    if (isPageFocus && isItemFocus) {
+    extraFocusCheck = extraFocusCheck === undefined ? true : extraFocusCheck;
+
+    if (isPageFocus && isItemFocus && extraFocusCheck) {
         Register.addEventListener({
             cmd,
             handler,

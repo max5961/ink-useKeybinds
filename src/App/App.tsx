@@ -21,6 +21,9 @@ export default function App(): React.ReactNode {
         keybinds: "vi",
         navigator: [["username"], ["password"], ["submit"]],
     });
+
+    // console.log(focus);
+
     const color = (name: string) => {
         if (focus[name]) return "blue";
         return "";
@@ -71,6 +74,7 @@ export default function App(): React.ReactNode {
                             placeholder="Enter yo username"
                             enterBinding={{ input: "i" }}
                             exitBinding={{ key: "return" }}
+                            autoEnter
                         />
                     </Box>
                     {errMsg("username")}
@@ -90,6 +94,7 @@ export default function App(): React.ReactNode {
                             placeholder="Enter yo password"
                             enterBinding={{ input: "i" }}
                             exitBinding={{ key: "return" }}
+                            autoEnter
                             mask
                         />
                     </Box>

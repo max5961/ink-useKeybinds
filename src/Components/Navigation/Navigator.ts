@@ -2,6 +2,10 @@ import assert from "assert";
 
 export type Initializer = string[][];
 export type Coords = [number, number];
+export type NavigatorPublicMethods = Omit<
+    { [P in keyof Navigator]: Navigator[P] },
+    "getIteration" | "getSize"
+>;
 
 export class Navigator {
     private nav: Initializer;
@@ -18,6 +22,7 @@ export class Navigator {
         this.nameMap = {};
         this.size = 0;
         this.init(nav, startingNode);
+        // console.log(`init location: ${this.getLocation()}`);
     }
 
     private init = (nav: Initializer, startingNode?: string | number): void => {
@@ -80,10 +85,6 @@ export class Navigator {
         this.prevMap[startName] = prevCoords;
         this.nextMap[prevName] = startCoords;
         this.currCoords = currStartCoords;
-    };
-
-    private getCurrCoords = (): [number, number] => {
-        return [-1, -1];
     };
 
     public getLocation = (): string => {

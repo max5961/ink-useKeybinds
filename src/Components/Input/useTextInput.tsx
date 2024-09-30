@@ -34,6 +34,9 @@ export function useTextInput(args: Args): Return {
 
     const isFocus =
         useIsFocus() && (args.formFocus === undefined || args.formFocus);
+
+    const formFocus = args.formFocus === undefined || args.formFocus;
+
     // console.log(`name: ${args.name}, isFocus: ${isFocus}`);
 
     // value also needs to be defined here as well to account for onChange changing value
@@ -79,107 +82,150 @@ export function useTextInput(args: Args): Return {
     );
 
     const keybinds: KeyBinds = state.insert ? insertKb : normalKb;
-    // prettier-ignore
-    // const priority: Priority = state.insert ? "textinput" : ACTIVE ? "default" : "never";
-    // prettier-ignore
-    const priority: Priority = state.insert && isFocus ? "textinput" : isFocus ? "default" : "never";
+    const priority: Priority =
+        state.insert && isFocus ? "textinput" : isFocus ? "default" : "never";
 
     useKeybinds(keybinds, { priority });
 
-    useEvent(ENTER, (stdin: string) => {
-        setState((prev) => {
-            return { ...prev, stdin, insert: true };
-        });
-        args.onEnter && args.onEnter(stdin);
-    });
+    useEvent(
+        ENTER,
+        (stdin: string) => {
+            setState((prev) => {
+                return { ...prev, stdin, insert: true };
+            });
+            args.onEnter && args.onEnter(stdin);
+        },
+        formFocus,
+    );
 
-    useEvent(EXIT, (stdin: string) => {
-        setState((prev) => {
-            return { ...prev, stdin, insert: false, idx: prev.value.length };
-        });
-        args.onExit && args.onExit(stdin);
-    });
+    useEvent(
+        EXIT,
+        (stdin: string) => {
+            setState((prev) => {
+                return {
+                    ...prev,
+                    stdin,
+                    insert: false,
+                    idx: prev.value.length,
+                };
+            });
+            args.onExit && args.onExit(stdin);
+        },
+        formFocus,
+    );
 
-    useEvent(EVENTS.left, () => {
-        if (state.insert && state.idx > 0) {
-            setState({ ...state, idx: state.idx - 1 });
-        }
-    });
+    useEvent(
+        EVENTS.left,
+        () => {
+            if (state.insert && state.idx > 0) {
+                setState({ ...state, idx: state.idx - 1 });
+            }
+        },
+        formFocus,
+    );
 
-    useEvent(EVENTS.right, () => {
-        if (state.insert && state.idx < state.value.length) {
-            setState({ ...state, idx: state.idx + 1 });
-        }
-    });
+    useEvent(
+        EVENTS.right,
+        () => {
+            if (!isFocus) return;
+            if (state.insert && state.idx < state.value.length) {
+                setState({ ...state, idx: state.idx + 1 });
+            }
+        },
+        formFocus,
+    );
 
     // can pass off form control here
-    useEvent(EVENTS.tab, () => {
-        if (!state.insert) return;
-
-        const nextValue = `${state.value}    `;
-        updateFormValues(nextValue);
-        setState({ ...state, idx: state.idx + 4, value: nextValue });
-    });
-
-    useEvent(EVENTS.down, () => {
-        if (!state.insert || !formContext) return;
-        setState({ ...state, insert: false });
-        // formContext.nextItem();
-    });
-
-    useEvent(EVENTS.up, () => {
-        if (!state.insert || !formContext) return;
-        setState({ ...state, insert: false });
-        // formContext.prevItem();
-    });
-
-    // CAN UPDATE VALUE
-    useEvent(EVENTS.backspace, () => {
-        if (!state.insert) return;
-        let { value, idx } = state;
-
-        // if (useFormRef && props.name) {
-        //     value = ref[name].current];
-        // }
-
-        const nextIdx = idx > 0 ? idx - 1 : 0;
-        const nextValue =
-            value.slice(0, idx > 0 ? idx - 1 : 0) + value.slice(idx);
-
-        updateFormValues(nextValue);
-        setState({ ...state, value: nextValue, idx: nextIdx });
-    });
-
-    // CAN UPDATE VALUE
-    useEvent(EVENTS.keypress, (stdin: string) => {
-        if (state.insert) {
-            args.onKeypress && args.onKeypress(stdin);
-        }
-
-        const invalidChars = [KEYCODES.esc, KEYCODES.insert, KEYCODES.return];
-        for (const invalidChar of invalidChars) {
-            if (invalidChar === stdin) {
-                return;
+    useEvent(
+        EVENTS.tab,
+        () => {
+            if (state.insert && args.insertControl?.tab) {
+                args.insertControl.tab();
+                setState({ ...state, insert: false });
             }
-        }
+        },
+        formFocus,
+    );
 
-        let nextValue = state.value;
+    useEvent(
+        EVENTS.down,
+        () => {
+            if (!state.insert || !formContext) return;
+            setState({ ...state, insert: false });
+            // formContext.nextItem();
+        },
+        formFocus,
+    );
 
-        if (state.insert) {
-            nextValue = `${state.value.slice(0, state.idx)}${stdin}${state.value.slice(state.idx)}`;
-        }
+    useEvent(
+        EVENTS.up,
+        () => {
+            if (!state.insert || !formContext) return;
+            setState({ ...state, insert: false });
+            // formContext.prevItem();
+        },
+        formFocus,
+    );
 
-        const nextIdx = stdin ? state.idx + stdin.length : state.idx;
+    // CAN UPDATE VALUE
+    useEvent(
+        EVENTS.backspace,
+        () => {
+            if (!state.insert) return;
+            let { value, idx } = state;
 
-        if (nextIdx !== state.idx && state.insert) {
+            // if (useFormRef && props.name) {
+            //     value = ref[name].current];
+            // }
+
+            const nextIdx = idx > 0 ? idx - 1 : 0;
+            const nextValue =
+                value.slice(0, idx > 0 ? idx - 1 : 0) + value.slice(idx);
+
             updateFormValues(nextValue);
-            setState({
-                ...state,
-                value: nextValue,
-                idx: nextIdx,
-            });
-        }
-    });
+            setState({ ...state, value: nextValue, idx: nextIdx });
+        },
+        formFocus,
+    );
+
+    // CAN UPDATE VALUE
+    useEvent(
+        EVENTS.keypress,
+        (stdin: string) => {
+            if (state.insert) {
+                args.onKeypress && args.onKeypress(stdin);
+            }
+
+            const invalidChars = [
+                KEYCODES.esc,
+                KEYCODES.insert,
+                KEYCODES.return,
+            ];
+            for (const invalidChar of invalidChars) {
+                if (invalidChar === stdin) {
+                    return;
+                }
+            }
+
+            let nextValue = state.value;
+
+            if (state.insert) {
+                nextValue = `${state.value.slice(0, state.idx)}${stdin}${state.value.slice(state.idx)}`;
+            }
+
+            const nextIdx = stdin ? state.idx + stdin.length : state.idx;
+
+            if (nextIdx !== state.idx && state.insert) {
+                updateFormValues(nextValue);
+                setState({
+                    ...state,
+                    value: nextValue,
+                    idx: nextIdx,
+                });
+            }
+        },
+        formFocus,
+    );
 
     return {
         nextValue: state.value,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createRegister, RegisterOpts } from "./createRegister.js";
+import { useCreateRegister, RegisterOpts } from "./useCreateRegister.js";
 import { shallowEqualObjects } from "shallow-equal";
 import { useNavigator } from "../Navigation/useNavigator.js";
 import { mapIncludes } from "./util.js";
@@ -31,6 +31,11 @@ export type UseFormReturn = {
         value: string;
         onChange: (nextValue: string) => void;
         formFocus: boolean;
+        insertControl: {
+            tab: () => unknown;
+            up: () => unknown;
+            down: () => unknown;
+        };
     };
     registerSubmit: (name: string) => { formFocus: boolean };
     handleSubmit: (
@@ -70,17 +75,23 @@ export function useForm(opts: Opts = {}): UseFormReturn {
         setFocusMap(focusMapRef.current);
     }, []);
 
-    const { focus, util } = useNavigator(opts?.navigator || focusMap, {
-        keybinds: opts?.keybinds || "arrow",
-    });
+    const { node, focus, internalUtil } = useNavigator(
+        opts?.navigator || focusMap,
+        {
+            keybinds: opts?.keybinds || "arrow",
+        },
+    );
 
-    const register = createRegister({
+    console.log(node);
+
+    const register = useCreateRegister({
         focus: focus,
         formState: formState.current,
         focusMapRef: focusMapRef.current,
         submitCount: submitCount.current,
         errors,
         setErrors,
+        internalUtil,
     });
 
     function registerSubmit(name: string) {
@@ -133,13 +144,13 @@ export function useForm(opts: Opts = {}): UseFormReturn {
         errors,
         focus: focus,
         util: {
-            focusUp: util.up,
-            focusDown: util.down,
-            focusLeft: util.left,
-            focusRight: util.right,
-            focusNext: util.next,
-            focusPrev: util.prev,
-            focusIteration: util.moveToIteration,
+            focusUp: internalUtil.up,
+            focusDown: internalUtil.down,
+            focusLeft: internalUtil.left,
+            focusRight: internalUtil.right,
+            focusNext: internalUtil.next,
+            focusPrev: internalUtil.prev,
+            focusIteration: internalUtil.moveToIteration,
         },
     };
 }

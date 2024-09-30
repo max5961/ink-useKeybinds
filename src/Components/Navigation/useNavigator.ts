@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigator, Initializer } from "./Navigator.js";
+import { Navigator, Initializer, NavigatorPublicMethods } from "./Navigator.js";
 import { shallowEqualArrays } from "shallow-equal";
 import { useKeybinds } from "../../use-keybinds/useKeybinds.js";
 import { useEvent } from "../../use-keybinds/useEvent.js";
@@ -8,6 +8,7 @@ import {
     viKeybinds,
     arrowKeybinds,
 } from "./navigatorConstants.js";
+import { equalInitializers } from "./util.js";
 
 type Opts<T extends string = string> = {
     initialFocus?: T;
@@ -17,10 +18,8 @@ type Opts<T extends string = string> = {
 type Return<T extends string = string> = {
     node: T;
     focus: FocusMap<T>;
-    util: Omit<
-        { [P in keyof Navigator]: Navigator[P] },
-        "getIteration" | "getSize"
-    >;
+    util: NavigatorPublicMethods;
+    internalUtil: NavigatorPublicMethods;
 };
 
 type FocusMap<T extends string = string> = {
@@ -60,31 +59,28 @@ export function useNavigator<T extends string = string>(
         );
     }
 
-    useEffect(() => {
-        if (!shallowEqualArrays(initializer, initializerRef.current)) {
-            const initialIter = navigator.current.getIteration();
+    if (!equalInitializers(initializer, initializerRef.current)) {
+        const initialIter = navigator.current.getIteration();
 
-            // Navigator accepts an initial focus, but if the initial focus does
-            // not exist in the initializer, focus defaults to the first node
-            navigator.current = new Navigator(initializer, initialIter);
-            initializerRef.current = initializer;
+        // Navigator accepts an initial focus, but if the initial focus does
+        // not exist in the initializer, focus defaults to the first node
+        navigator.current = new Navigator(initializer, initialIter);
+        initializerRef.current = initializer;
 
-            const nextIter = navigator.current.getIteration();
-            const nextSize = navigator.current.getSize();
+        const nextIter = navigator.current.getIteration();
+        const nextSize = navigator.current.getSize();
 
-            if (initialIter === nextIter) {
-                // still need to update node, in case iteration stays the same, but name changes
-                setNode(navigator.current.getLocation());
-                return;
-            }
-
-            // Initializer size has decreased AND shifted initialIter out of range,
-            // so shift focus to the last node in the new Navigator
-            if (nextSize <= initialIter) {
-                setNode(navigator.current.moveToIteration(nextSize - 1));
-            }
+        if (initialIter === nextIter) {
+            // still need to update node, in case iteration stays the same, but name changes
+            setNode(navigator.current.getLocation());
         }
-    }, [initializer]);
+
+        // Initializer size has decreased AND shifted initialIter out of range,
+        // so shift focus to the last node in the new Navigator
+        else if (nextSize <= initialIter) {
+            setNode(navigator.current.moveToIteration(nextSize - 1));
+        }
+    }
 
     // prettier-ignore
     const keybinds = KEYBINDS_TYPE === "vi"
@@ -121,18 +117,34 @@ export function useNavigator<T extends string = string>(
         setNode(navigator.current.prev());
     });
 
+    const util: NavigatorPublicMethods = {
+        getLocation: navigator.current.getLocation,
+        moveToIteration: navigator.current.moveToIteration,
+        up: navigator.current.up,
+        down: navigator.current.down,
+        left: navigator.current.left,
+        right: navigator.current.right,
+        next: navigator.current.next,
+        prev: navigator.current.prev,
+    };
+
+    const internalUtil: NavigatorPublicMethods = { ...util };
+    for (const key in internalUtil) {
+        internalUtil[key] = () => {
+            const currNode = util.getLocation();
+            const nextNode = util[key]();
+            console.log(
+                `nodeState: ${node}, (curr): ${currNode} --> (next): ${nextNode}`,
+            );
+            setNode(nextNode);
+            return "";
+        };
+    }
+
     return {
         node: node as T,
         focus: getFocusMap(),
-        util: {
-            getLocation: navigator.current.getLocation,
-            moveToIteration: navigator.current.moveToIteration,
-            up: navigator.current.up,
-            down: navigator.current.down,
-            left: navigator.current.left,
-            right: navigator.current.right,
-            next: navigator.current.next,
-            prev: navigator.current.prev,
-        },
+        util,
+        internalUtil,
     };
 }
