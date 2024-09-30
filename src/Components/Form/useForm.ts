@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useKeybinds } from "../../use-keybinds/useKeybinds.js";
-import { useEvent } from "../../use-keybinds/useEvent.js";
 import { createRegister, RegisterOpts } from "./createRegister.js";
 import { shallowEqualObjects } from "shallow-equal";
+import { useNavigator } from "../Navigation/useNavigator.js";
+import { mapIncludes } from "./util.js";
 
 export type FormState = {
     [key: string]: { value: string; opts: RegisterOpts; error: string };
@@ -39,65 +39,55 @@ export type UseFormReturn = {
     ) => () => void;
     focus: FocusState;
     errors: Errors;
+    util: {
+        focusNext: () => void;
+        focusPrev: () => void;
+        focusUp: () => void;
+        focusDown: () => void;
+        focusRight: () => void;
+        focusLeft: () => void;
+        focusIteration: (n: number) => void;
+    };
 };
 
-export function useForm(): UseFormReturn {
+type Opts = {
+    navigator?: string[][];
+    keybinds?: "none" | "vi" | "arrow";
+};
+
+export function useForm(opts: Opts = {}): UseFormReturn {
     const submitCount = useRef(0);
 
     const formState = useRef<FormState>({});
-    const focusArray = useRef<string[]>([]);
-    const focus = useRef<FocusState>({});
-
-    const [focusIdx, setFocusIdx] = useState(0);
     const [errors, setErrors] = useState<Errors>({});
-    const [_, render] = useState(0);
-    const forceRender = () => render((prev) => prev + 1);
 
-    function updateFocusRef(nextIdx: number) {
-        focus.current = Object.fromEntries(
-            focusArray.current.map((name, idx) => {
-                return [name, nextIdx === idx];
-            }),
-        );
-    }
+    // could add a 'prev' here to check for changes in registers just in case
+    // the form is ever changed and then setFocusMap again if there are any changes
+    const focusMapRef = useRef<string[][]>([]);
+    const [focusMap, setFocusMap] = useState<string[][]>([]);
 
-    useKeybinds({
-        focusNext: [{ key: "tab" }, { input: "j" }, { key: "down" }],
-        focusPrev: [{ input: "k" }, { key: "up" }],
-    });
-    useEvent("focusNext", () => {
-        if (focusIdx >= focusArray.current.length - 1) {
-            updateFocusRef(0); // why does the order matter here???
-            setFocusIdx(0);
-        } else {
-            updateFocusRef(focusIdx + 1);
-            setFocusIdx(focusIdx + 1);
-        }
-    });
-    useEvent("focusPrev", () => {
-        if (focusIdx === 0) {
-            updateFocusRef(focusArray.current.length - 1); // why does the order matter here???
-            setFocusIdx(focusArray.current.length - 1);
-        } else {
-            updateFocusRef(focusIdx - 1);
-            setFocusIdx(focusIdx - 1);
-        }
+    useEffect(() => {
+        setFocusMap(focusMapRef.current);
+    }, []);
+
+    const { focus, util } = useNavigator(opts?.navigator || focusMap, {
+        keybinds: opts?.keybinds || "arrow",
     });
 
     const register = createRegister({
-        focus: focus.current,
+        focus: focus,
         formState: formState.current,
-        focusArray: focusArray.current,
+        focusMapRef: focusMapRef.current,
         submitCount: submitCount.current,
         errors,
         setErrors,
     });
 
     function registerSubmit(name: string) {
-        if (!focusArray.current.includes(name)) {
-            focusArray.current.push(name);
+        if (!mapIncludes(focusMapRef.current, name)) {
+            focusMapRef.current.push([name]);
         }
-        return { formFocus: focus.current[name] };
+        return { formFocus: focus[name] };
     }
 
     function handleSubmit(
@@ -136,16 +126,20 @@ export function useForm(): UseFormReturn {
         };
     }
 
-    useEffect(() => {
-        updateFocusRef(focusIdx);
-        forceRender();
-    }, []);
-
     return {
         register,
         registerSubmit,
         handleSubmit,
         errors,
-        focus: focus.current,
+        focus: focus,
+        util: {
+            focusUp: util.up,
+            focusDown: util.down,
+            focusLeft: util.left,
+            focusRight: util.right,
+            focusNext: util.next,
+            focusPrev: util.prev,
+            focusIteration: util.moveToIteration,
+        },
     };
 }

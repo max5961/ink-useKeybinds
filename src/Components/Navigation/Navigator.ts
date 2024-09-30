@@ -82,6 +82,10 @@ export class Navigator {
         this.currCoords = currStartCoords;
     };
 
+    private getCurrCoords = (): [number, number] => {
+        return [-1, -1];
+    };
+
     public getLocation = (): string => {
         try {
             const [y, x] = this.currCoords;
@@ -94,7 +98,7 @@ export class Navigator {
     public getIteration = (): number => {
         const name = this.getLocation();
 
-        return this.nameMap[name].iteration;
+        return this.nameMap[name]?.iteration || -1;
     };
 
     public getSize = (): number => {
@@ -122,6 +126,8 @@ export class Navigator {
 
     private autoMove = (dir: -1 | 1): string => {
         const name = this.getLocation();
+        if (name === "") return "";
+
         const nextCoords = dir < 0 ? this.prevMap[name] : this.nextMap[name];
 
         this.currCoords = nextCoords;

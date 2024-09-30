@@ -31,6 +31,8 @@ export function useNavigator<T extends string = string>(
     initializer: Initializer,
     opts: Opts<T> = {},
 ): Return<T> {
+    const KEYBINDS_TYPE = opts.keybinds || "arrow";
+
     const navigator = useRef<Navigator>(
         new Navigator(initializer, opts.initialFocus),
     );
@@ -85,15 +87,14 @@ export function useNavigator<T extends string = string>(
     }, [initializer]);
 
     // prettier-ignore
-    const keybinds = opts.keybinds === "vi"
+    const keybinds = KEYBINDS_TYPE === "vi"
             ? viKeybinds
-            : opts.keybinds === "arrow"
+            : KEYBINDS_TYPE === "arrow"
               ? arrowKeybinds
               : {};
 
     useKeybinds(keybinds, {
-        priority:
-            !opts.keybinds || opts.keybinds === "arrow" ? "never" : "default",
+        priority: KEYBINDS_TYPE === "none" ? "never" : "default",
     });
 
     useEvent(NAVIGATOR_EVENTS.up, () => {

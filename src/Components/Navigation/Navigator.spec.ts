@@ -24,17 +24,18 @@ describe("Starting node in constructor", () => {
         const nav = new Navigator(map, "c");
         expect(nav.getLocation()).toBe("c");
     });
-    test("f", () => {
-        const nav = new Navigator(map, "f");
-        expect(nav.getLocation()).toBe("f");
+
+    test("iteration 0", () => {
+        const nav = new Navigator(map, 0);
+        expect(nav.getLocation()).toBe("a");
     });
-    test("g", () => {
-        const nav = new Navigator(map, "g");
-        expect(nav.getLocation()).toBe("g");
+    test("iteration 1", () => {
+        const nav = new Navigator(map, 1);
+        expect(nav.getLocation()).toBe("b");
     });
-    test("h", () => {
-        const nav = new Navigator(map, "h");
-        expect(nav.getLocation()).toBe("h");
+    test("iteration 2", () => {
+        const nav = new Navigator(map, 2);
+        expect(nav.getLocation()).toBe("c");
     });
 
     test("invalid starting node defaults safely", () => {
@@ -44,12 +45,47 @@ describe("Starting node in constructor", () => {
 });
 
 describe("Handles different initializers", () => {
-    // test("Empty initializer '[[]]' throws error", () => {
-    //     const map = [[]];
-    //     expect(() => {
-    //         new Navigator(map);
-    //     }).toThrow();
-    // });
+    test("Empty initializer '[[]]' does not throw error", () => {
+        const map = [[]];
+        expect(() => {
+            new Navigator(map);
+        }).not.toThrow();
+    });
+
+    test("Empty initializer '[]' does not throw error", () => {
+        const map = [[]];
+        expect(() => {
+            new Navigator(map);
+        }).not.toThrow();
+    });
+
+    test("Empty initializer '[[]]' always returns ''", () => {
+        const map = [[]];
+        const nav = new Navigator(map);
+
+        expect(nav.getLocation()).toBe("");
+        expect(nav.next()).toBe("");
+        expect(nav.prev()).toBe("");
+        expect(nav.moveToIteration(0)).toBe("");
+        expect(nav.left()).toBe("");
+        expect(nav.right()).toBe("");
+        expect(nav.down()).toBe("");
+        expect(nav.up()).toBe("");
+    });
+
+    test("Empty initializer '[]' always returns ''", () => {
+        const map = [];
+        const nav = new Navigator(map);
+
+        expect(nav.getLocation()).toBe("");
+        expect(nav.next()).toBe("");
+        expect(nav.prev()).toBe("");
+        expect(nav.moveToIteration(0)).toBe("");
+        expect(nav.left()).toBe("");
+        expect(nav.right()).toBe("");
+        expect(nav.down()).toBe("");
+        expect(nav.up()).toBe("");
+    });
 
     test("Single node does not throw error", () => {
         const map = [["a"]];

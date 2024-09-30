@@ -1,11 +1,7 @@
 import { shallowEqualObjects } from "shallow-equal";
-import {
-    FocusCycle,
-    FocusState,
-    FormState,
-    UseFormReturn,
-    Errors,
-} from "./useForm.js";
+import { FocusState, FormState, UseFormReturn, Errors } from "./useForm.js";
+
+import { mapIncludes } from "./util.js";
 
 export type RegisterOpts = {
     required?: {
@@ -16,14 +12,14 @@ export type RegisterOpts = {
 
 export function createRegister({
     formState,
-    focusArray,
+    focusMapRef,
     focus,
     submitCount,
     errors,
     setErrors,
 }: {
     formState: FormState;
-    focusArray: FocusCycle;
+    focusMapRef: string[][];
     focus: FocusState;
     submitCount: number;
     errors: Errors;
@@ -36,6 +32,8 @@ export function createRegister({
         if (formState[name] === undefined) {
             formState[name] = { value: "", opts: opts ?? {}, error: "" };
         }
+
+        if (!mapIncludes(focusMapRef, name)) focusMapRef.push([name]);
 
         function onChange(nextValue: string) {
             formState[name].value = nextValue;
@@ -56,10 +54,6 @@ export function createRegister({
             if (!shallowEqualObjects(nextErrors, errors)) {
                 setErrors(nextErrors);
             }
-        }
-
-        if (!focusArray.includes(name)) {
-            focusArray.push(name);
         }
 
         return {

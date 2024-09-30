@@ -1,3 +1,5 @@
+// Register.setRegisterSize(2);
+//
 // // prettier-ignore
 // const navigatorOne = [
 //     ["A", "B"],
@@ -28,7 +30,8 @@
 //
 //     const [navOne, setNavOne] = useState(true);
 //
-//     const { node } = useNavigator<Nav>(navOne ? navigatorOne : navigatorTwo, {
+//     // prettier-ignore
+//     const { node, focus } = useNavigator<Nav>(navOne ? navigatorOne : navigatorTwo, {
 //         keybinds: "vi",
 //     });
 //
@@ -38,7 +41,7 @@
 //         setNavOne(!navOne);
 //     });
 //
-//     const color = (checkNode: Nav) => (checkNode === node ? "blue" : "");
+//     const color = (node: Nav) => (focus[node] ? "blue" : "");
 //
 //     if (navOne) {
 //         return (
