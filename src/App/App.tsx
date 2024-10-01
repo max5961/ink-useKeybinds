@@ -22,8 +22,6 @@ export default function App(): React.ReactNode {
         navigator: [["username"], ["password"], ["submit"]],
     });
 
-    // console.log(focus);
-
     const color = (name: string) => {
         if (focus[name]) return "blue";
         return "";

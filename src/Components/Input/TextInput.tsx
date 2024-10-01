@@ -117,7 +117,8 @@ const DisplayValue = React.memo(function (
 
     const displayValue = `${before}${cursor}${after}`;
 
-    return <Text>{displayValue}</Text>;
+    const truncate = insert ? "truncate-start" : "truncate-end";
+    return <Text wrap={truncate}>{displayValue}</Text>;
 });
 
 function normalizeColor(color: string): string {
