@@ -71,10 +71,9 @@ export default function App(): React.ReactNode {
                                     message: "Missing username!",
                                 },
                             })}
-                            placeholder="Enter yo username"
+                            placeholder="Enter your username"
                             enterBinding={{ input: "i" }}
                             exitBinding={{ key: "return" }}
-                            autoEnter
                         />
                     </Box>
                     {errMsg("username")}
@@ -91,10 +90,9 @@ export default function App(): React.ReactNode {
                                     message: "Missing pw!",
                                 },
                             })}
-                            placeholder="Enter yo password"
+                            placeholder="Enter your password"
                             enterBinding={{ input: "i" }}
                             exitBinding={{ key: "return" }}
-                            autoEnter
                             mask
                         />
                     </Box>
@@ -106,10 +104,7 @@ export default function App(): React.ReactNode {
                         borderColor={color("submit")}
                         flexDirection="column"
                     >
-                        <Submit
-                            color={color("submit")}
-                            {...registerSubmit("submit")}
-                        >
+                        <Submit color={color("submit")} {...registerSubmit("submit")}>
                             Submit
                         </Submit>
                     </Box>
@@ -131,13 +126,10 @@ function MyInput({ name }: { name: string }): React.ReactNode {
                 name={name}
                 value={value}
                 onChange={onChange}
-                autoEnter={true}
                 enterBinding={{ input: "i" }}
                 exitBinding={{ key: "return" }}
                 placeholder={
-                    name === "username"
-                        ? "Enter your username"
-                        : "Enter your password"
+                    name === "username" ? "Enter your username" : "Enter your password"
                 }
                 mask={name === "password"}
             />

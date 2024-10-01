@@ -30,11 +30,12 @@ export type UseFormReturn = {
         name: string;
         value: string;
         onChange: (nextValue: string) => void;
-        formFocus: boolean;
+        nameFocused: boolean;
         insertControl: {
-            tab: () => unknown;
-            up: () => unknown;
-            down: () => unknown;
+            // boolean return indicates the success of the movement attempt
+            tab: () => boolean;
+            up: () => boolean;
+            down: () => boolean;
         };
     };
     registerSubmit: (name: string) => { formFocus: boolean };

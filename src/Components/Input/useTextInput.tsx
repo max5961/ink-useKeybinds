@@ -23,41 +23,37 @@ export type Return = Omit<State, "value"> & { nextValue: string };
 export function useTextInput(args: Args): Return {
     const formContext = useFormContext();
 
+    // prettier-ignore
+    const AUTO_INSERT = formContext && args.autoInsert === undefined ? true : args.autoInsert;
+    const IS_FOCUS = useIsFocus() && (args.nameFocused === undefined || args.nameFocused);
+    const [ID] = useState(randomUUID());
+
     function updateFormValues(nextValue: string) {
         if (!formContext || !args.name) return;
 
         formContext.values[args.name] = nextValue;
     }
 
-    const ACTIVE = args?.active === undefined ? true : args?.active;
-    const [ID] = useState(randomUUID());
-
-    const isFocus =
-        useIsFocus() && (args.formFocus === undefined || args.formFocus);
-
-    const formFocus = args.formFocus === undefined || args.formFocus;
-
-    // console.log(`name: ${args.name}, isFocus: ${isFocus}`);
-
-    // value also needs to be defined here as well to account for onChange changing value
+    // Value also needs to be defined here as well to account for onChange changing value
     // rather than relying on the local state.value variable
-
     const [state, setState] = useState<State>({
         value: args.value,
         idx: args.value.length,
-        insert: (args.autoEnter && isFocus) || false,
+        insert: (AUTO_INSERT && IS_FOCUS) || false,
         stdin: null,
     });
 
+    // Handle automatically entering insert if when entering focus
     useEffect(() => {
-        if (!isFocus) return;
+        if (!IS_FOCUS) return;
 
-        if (args?.autoEnter && !state.insert) {
+        if (AUTO_INSERT && !state.insert) {
             setState({ ...state, insert: true });
             args.onEnter && args.onEnter(state.stdin || "");
         }
-    }, [isFocus]);
+    }, [IS_FOCUS]);
 
+    // Handle executing onEnter and onExit callbacks
     const firstRender = useRef(true);
     useEffect(() => {
         if (firstRender.current) {
@@ -72,18 +68,18 @@ export function useTextInput(args: Args): Return {
         }
     }, [state.insert]);
 
-    const [normalKb, ENTER] = FormKeys.getNormalKeybindings(
-        ID,
-        args.enterBinding,
-    );
-    const [insertKb, EXIT] = FormKeys.getInsertKeybindings(
-        ID,
-        args.exitBinding,
-    );
-
+    /*
+     * Handle keypresses that control state
+     *
+     * left, right, up, down, tab, enter, exit can only effect display value
+     * keypress, backspace can effect both stored value and displayed, so they must
+     * also update the formState ref in the useForm hook
+     */
+    const [normalKb, ENTER] = FormKeys.getNormalKeybindings(ID, args.enterBinding);
+    const [insertKb, EXIT] = FormKeys.getInsertKeybindings(ID, args.exitBinding);
     const keybinds: KeyBinds = state.insert ? insertKb : normalKb;
     const priority: Priority =
-        state.insert && isFocus ? "textinput" : isFocus ? "default" : "never";
+        state.insert && IS_FOCUS ? "textinput" : IS_FOCUS ? "default" : "never";
 
     useKeybinds(keybinds, { priority });
 
@@ -95,7 +91,7 @@ export function useTextInput(args: Args): Return {
             });
             args.onEnter && args.onEnter(stdin);
         },
-        formFocus,
+        IS_FOCUS,
     );
 
     useEvent(
@@ -111,7 +107,7 @@ export function useTextInput(args: Args): Return {
             });
             args.onExit && args.onExit(stdin);
         },
-        formFocus,
+        IS_FOCUS,
     );
 
     useEvent(
@@ -121,74 +117,73 @@ export function useTextInput(args: Args): Return {
                 setState({ ...state, idx: state.idx - 1 });
             }
         },
-        formFocus,
+        IS_FOCUS,
     );
 
     useEvent(
         EVENTS.right,
         () => {
-            if (!isFocus) return;
             if (state.insert && state.idx < state.value.length) {
                 setState({ ...state, idx: state.idx + 1 });
             }
         },
-        formFocus,
+        IS_FOCUS,
     );
 
-    // can pass off form control here
     useEvent(
         EVENTS.tab,
         () => {
-            if (state.insert && args.insertControl?.tab) {
-                args.insertControl.tab();
+            if (!state.insert || !args.insertControl?.tab) return;
+
+            const success = args.insertControl.tab();
+            if (typeof success === "boolean" && success) {
                 setState({ ...state, insert: false });
             }
         },
-        formFocus,
+        IS_FOCUS,
     );
 
     useEvent(
         EVENTS.down,
         () => {
-            if (!state.insert || !formContext) return;
-            args.insertControl?.down && args.insertControl.down();
-            setState({ ...state, insert: false });
+            if (!state.insert || !args.insertControl?.down) return;
+
+            const success = args.insertControl.down();
+            if (typeof success === "boolean" && success) {
+                setState({ ...state, insert: false });
+            }
         },
-        formFocus,
+        IS_FOCUS,
     );
 
     useEvent(
         EVENTS.up,
         () => {
-            if (!state.insert || !formContext) return;
-            args.insertControl?.up && args.insertControl.up();
-            setState({ ...state, insert: false });
+            if (!state.insert || !args.insertControl?.up) return;
+
+            const success = args.insertControl.up();
+            if (typeof success === "boolean" && success) {
+                setState({ ...state, insert: false });
+            }
         },
-        formFocus,
+        IS_FOCUS,
     );
 
-    // CAN UPDATE VALUE
     useEvent(
         EVENTS.backspace,
         () => {
             if (!state.insert) return;
             let { value, idx } = state;
 
-            // if (useFormRef && props.name) {
-            //     value = ref[name].current];
-            // }
-
             const nextIdx = idx > 0 ? idx - 1 : 0;
-            const nextValue =
-                value.slice(0, idx > 0 ? idx - 1 : 0) + value.slice(idx);
+            const nextValue = value.slice(0, idx > 0 ? idx - 1 : 0) + value.slice(idx);
 
             updateFormValues(nextValue);
             setState({ ...state, value: nextValue, idx: nextIdx });
         },
-        formFocus,
+        IS_FOCUS,
     );
 
-    // CAN UPDATE VALUE
     useEvent(
         EVENTS.keypress,
         (stdin: string) => {
@@ -196,11 +191,7 @@ export function useTextInput(args: Args): Return {
                 args.onKeypress && args.onKeypress(stdin);
             }
 
-            const invalidChars = [
-                KEYCODES.esc,
-                KEYCODES.insert,
-                KEYCODES.return,
-            ];
+            const invalidChars = [KEYCODES.esc, KEYCODES.insert, KEYCODES.return];
             for (const invalidChar of invalidChars) {
                 if (invalidChar === stdin) {
                     return;
@@ -224,7 +215,7 @@ export function useTextInput(args: Args): Return {
                 });
             }
         },
-        formFocus,
+        IS_FOCUS,
     );
 
     return {

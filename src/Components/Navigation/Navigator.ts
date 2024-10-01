@@ -22,7 +22,6 @@ export class Navigator {
         this.nameMap = {};
         this.size = 0;
         this.init(nav, startingNode);
-        // console.log(`init location: ${this.getLocation()}`);
     }
 
     private init = (nav: Initializer, startingNode?: string | number): void => {

@@ -4,7 +4,7 @@ import { Return, useTextInput } from "./useTextInput.js";
 import { Props as TextProps } from "../../../node_modules/ink/build/components/Text.js";
 import chalk from "chalk";
 import { Binding } from "../../use-keybinds/useKeybinds.js";
-import { FocusState, useForm, UseFormReturn } from "../Form/useForm.js";
+import { UseFormReturn } from "../Form/useForm.js";
 
 export namespace TextInputTypes {
     export type Color = Exclude<TextProps["color"], undefined>;
@@ -13,12 +13,12 @@ export namespace TextInputTypes {
         value: string;
         onChange: (value: string) => unknown;
         name?: string;
-        formFocus?: boolean;
+        nameFocused?: boolean;
         enterBinding?: Binding | Binding[];
         exitBinding?: Binding | Binding[];
         insertControl?: ReturnType<UseFormReturn["register"]>["insertControl"];
         active?: boolean;
-        autoEnter?: boolean;
+        autoInsert?: boolean;
         mask?: boolean;
         onExit?: (stdin: string) => unknown;
         onEnter?: (stdin: string) => unknown;
@@ -30,14 +30,7 @@ export namespace TextInputTypes {
 }
 
 export function TextInput(props: TextInputTypes.Props): React.ReactNode {
-    const {
-        value,
-        onChange,
-        mask,
-        placeholder,
-        color = "",
-        cursorColor = "",
-    } = props;
+    const { value, onChange, mask, placeholder, color = "", cursorColor = "" } = props;
 
     const { nextValue, idx, insert } = useTextInput(props);
 

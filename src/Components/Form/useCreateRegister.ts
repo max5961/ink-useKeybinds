@@ -27,10 +27,7 @@ export function useCreateRegister({
     setErrors: (errors: Errors) => void;
     internalUtil: NavigatorPublicMethods;
 }) {
-    return (
-        name: string,
-        opts?: RegisterOpts,
-    ): ReturnType<UseFormReturn["register"]> => {
+    return (name: string, opts?: RegisterOpts): ReturnType<UseFormReturn["register"]> => {
         if (formState[name] === undefined) {
             formState[name] = { value: "", opts: opts ?? {}, error: "" };
         }
@@ -58,15 +55,29 @@ export function useCreateRegister({
             }
         }
 
+        const move = (d: "up" | "down" | "next"): boolean => {
+            const node = internalUtil.getLocation();
+
+            if (d === "up") {
+                internalUtil.up();
+            } else if (d === "down") {
+                internalUtil.down();
+            } else if (d === "next") {
+                internalUtil.next();
+            }
+
+            return node !== internalUtil.getLocation();
+        };
+
         return {
             name: name,
             value: formState[name].value,
             onChange: onChange,
-            formFocus: focus[name],
+            nameFocused: focus[name],
             insertControl: {
-                tab: internalUtil.next,
-                up: internalUtil.prev,
-                down: internalUtil.next,
+                tab: () => move("next"),
+                up: () => move("up"),
+                down: () => move("down"),
             },
         };
     };

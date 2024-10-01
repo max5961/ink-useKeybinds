@@ -130,8 +130,9 @@ export function useNavigator<T extends string = string>(
     const internalUtil: NavigatorPublicMethods = { ...util };
     for (const key in internalUtil) {
         internalUtil[key] = () => {
-            setNode(util[key]());
-            return "";
+            const node = util[key]();
+            setNode(node);
+            return node;
         };
     }
 
